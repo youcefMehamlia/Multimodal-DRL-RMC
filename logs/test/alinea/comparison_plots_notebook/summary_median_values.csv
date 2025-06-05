@@ -1,0 +1,7 @@
+Baseline,total_running_vehicles,total_arrived,mainline_flow_downstream_v/h,mainline_occ_downstream_percent,mainline_speed_downstream_km/h,ramp_queue_veh,alinea_measured_downstream_occ_percent,alinea_current_metering_rate_vph
+Baseline 13,0.0,1.0,4140.0,11.881006944320234,55.06932088091491,8.0,12.035046544847887,1800.0
+Baseline 15,0.0,1.0,4410.0,13.236809638442535,0.0,8.0,12.035046544847887,1800.0
+Baseline 18,0.0,0.5,2155.0,6.15,27.5,13.0,7.0,995.0
+Baseline 20,0.0,1.0,2695.0,7.884618905286625,23.83938092413876,11.5,9.420405275895973,1800.0
+Baseline 22,0.0,1.0,2705.0,7.8549999999999995,23.8,11.5,9.4,1800.0
+Baseline 25,0.0,1.0,2660.0,7.81,23.75,11.0,9.35,1800.0
