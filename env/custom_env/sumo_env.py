@@ -14,7 +14,7 @@ import json
 # from itertools import permutations # Not used in this snippet
 
 # Define the path to the SUMO installation directory.
-SUMO_HOME = "./sumo/" # Or your actual SUMO_HOME if different
+SUMO_HOME = "../sumo/" # Or your actual SUMO_HOME if different
 
 # Append the SUMO tools directory to the Python path
 # Ensure this path is correct for your system
@@ -83,8 +83,11 @@ class SumoEnv:
         self.FREEFLOW_SPEED_MPS = self.args.get("v_max_speed", 27.77) # m/s, from SUMO_PARAMS
         # Estimate max queue based on on_ramp length (204.44m for on_ramp_0) and veh size
         # (5m veh + 2.5m gap = 7.5m per veh). 204 / 7.5 ~ 27 veh.
-        self.MAX_RAMP_QUEUE_VEH = self.args.get("max_ramp_queue_veh", 30)
-        self.MAX_LANE_FLOW_VPH = self.args.get("max_lane_flow_vph", 2000) # veh/hr/lane
+        self.MAX_RAMP_QUEUE_VEH = self.args.get("max_ramp_queue_veh", 25)
+        self.MAX_LANE_FLOW_VPH = self.args.get("max_lane_flow_vph", 1900) # veh/hr/lane
+        # self.MAX_FLOW_UPSTREAM_VPH = self.args.get("max_flow_upstream_vph", 5490) # veh/hr
+        # self.MAX_FLOW_MERGING_VPH = self.args.get("max_flow_merging_vph", 5490) # veh/hr
+        # self.MAX_FLOW_DOWNSTREAM_VPH = self.args.get("max_flow_downstream_vph", 5760)
         self.MAX_OCCUPANCY_PERCENT = 100.0
         
         # Set final flags based on constructor arguments.
@@ -123,7 +126,7 @@ class SumoEnv:
             params += [
                 "--delay", str(self.args.get("delay", 0)),
                 "--start", "true",
-                "--quit-on-end", "true"
+                "--quit-on-end", "false" # Keep SUMO open after simulation ends
             ]
             gui_settings_file = self.SUMO_ENV + "data/" + self.config + "/gui-settings.cfg"
             # Only add gui-settings-file if it exists, to avoid SUMO error

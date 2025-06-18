@@ -163,7 +163,7 @@ class AlineaDsBaseline(BaselineMeta):
     def __init__(self, *args, **kwargs):
         super(AlineaDsBaseline, self).__init__(*args, **kwargs)
         self.CYCLE_LENGTH_SEC = self.args.get("alinea_detector_period_sec", 40.0)
-        self.CRITICAL_OCCUPANCY_PERCENT = 14.0
+        self.CRITICAL_OCCUPANCY_PERCENT = 16.5
         self.KR = 60
         self.MIN_METERING_RATE_VPH = 180
         self.MAX_METERING_RATE_VPH = 1800
@@ -277,3 +277,167 @@ class AlineaDsBaseline(BaselineMeta):
         self._last_step_info["alinea_is_in_green_segment"] = self.is_in_green_phase_segment
         self._last_step_info["alinea_time_in_current_segment_sec"] = self.time_in_current_phase_segment_sec
         self._last_step_info["alinea_time_since_last_decision_sec"] = self.time_since_last_decision_sec
+        
+        
+class PiAlineaDsBaseline(BaselineMeta):
+    """
+    PI-ALINEA ramp metering baseline.
+
+    This baseline controller implements the PI-ALINEA algorithm, which adjusts the
+    ramp metering rate based on the downstream occupancy to maintain it at a
+    critical setpoint. It's an evolution of ALINEA, adding an integral term
+    to eliminate steady-state error and a proportional term on the occupancy change.
+
+    The control law is:
+    r(k) = r(k-1) + Kp * (O(k-2) - O(k-1)) + Ki * (O_crit - O(k-1))
+    where:
+    - r(k) is the metering rate for the current cycle.
+    - O(k-1) is the downstream occupancy from the last cycle.
+    - O(k-2) is the downstream occupancy from the cycle before last.
+    - O_crit is the target critical occupancy.
+    - Kp, Ki are the proportional and integral gains.
+    """
+    def __init__(self, *args, **kwargs):
+        super(PiAlineaDsBaseline, self).__init__(*args, **kwargs)
+        # PI-ALINEA specific parameters, fetched from args with defaults
+        self.CYCLE_LENGTH_SEC = self.args.get("alinea_detector_period_sec", 40.0)
+        self.CRITICAL_OCCUPANCY_PERCENT = self.args.get("pialinea_critical_occupancy_percent", 16.5)
+        self.KP = self.args.get("pialinea_kp", 60.0)  # Proportional gain
+        self.KI = self.args.get("pialinea_ki", 20.0)  # Integral gain
+        self.MIN_METERING_RATE_VPH = self.args.get("pialinea_min_rate_vph", 180)
+        self.MAX_METERING_RATE_VPH = self.args.get("pialinea_max_rate_vph", 1800)
+
+        # Common parameters for cycle timing
+        self.MIN_GREEN_TIME_SEC = self.args.get("pialinea_min_green_sec", 3.0)
+        self.MIN_RED_TIME_SEC = self.args.get("pialinea_min_red_sec", 0.0)
+        self.RAMP_SATURATION_FLOW_VPS = self.args.get("pialinea_sat_flow_vps", 0.5) # veh/sec
+
+        # State variables
+        self.current_metering_rate_vph = (self.MIN_METERING_RATE_VPH + self.MAX_METERING_RATE_VPH) / 2.0
+        self.time_since_last_decision_sec = 0.0
+        self.current_green_time_sec = 0.0
+        self.current_red_time_sec = self.CYCLE_LENGTH_SEC
+        self.is_in_green_phase_segment = False
+        self.time_in_current_phase_segment_sec = 0.0
+        self.downstream_detector_ids = []
+
+        # PI-ALINEA specific state
+        self.last_measured_downstream_occ = 0.0  # O(k-1) for logging
+        self.prev_measured_downstream_occ = 0.0  # O(k-2)
+
+    def reset(self):
+        self.simulation_reset()
+
+        self.downstream_detector_ids = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
+        if not self.downstream_detector_ids:
+             print(f"Warning: PI-Alinea could not find detectors on edge {self.DOWNSTREAM_EDGE}")
+
+        # Reset state
+        self.current_metering_rate_vph = (self.MIN_METERING_RATE_VPH + self.MAX_METERING_RATE_VPH) / 2.0
+        self.time_since_last_decision_sec = self.CYCLE_LENGTH_SEC  # Force immediate decision
+        self.current_green_time_sec = self.MIN_GREEN_TIME_SEC
+        self.current_red_time_sec = self.CYCLE_LENGTH_SEC - self.current_green_time_sec
+        self.is_in_green_phase_segment = False
+        self.time_in_current_phase_segment_sec = 0.0
+
+        # Initialize occupancies to the critical value to avoid large initial adjustments
+        self.last_measured_downstream_occ = self.CRITICAL_OCCUPANCY_PERCENT
+        self.prev_measured_downstream_occ = self.CRITICAL_OCCUPANCY_PERCENT
+
+        if self.ramp_meter_id is not None and self.red_phase_index != -1:
+            self.set_phase(self.ramp_meter_id, self.red_phase_index)
+            self.set_phase_duration(self.ramp_meter_id, self.CYCLE_LENGTH_SEC)
+
+        self._perform_pialinea_update_and_set_phases()  # Initial PI-ALINEA decision
+        self._update_log_info()  # Log initial state
+
+    def _get_downstream_occupancy(self):
+        if not self.downstream_detector_ids:
+            return self.CRITICAL_OCCUPANCY_PERCENT  # Failsafe
+        # Uses interval, which means it's data from the *last completed* interval
+        occ = self.get_loops_occupancy_interval(self.downstream_detector_ids)
+        self.last_measured_downstream_occ = occ # Store for logging
+        return occ
+
+    def _perform_pialinea_update_and_set_phases(self):
+        if self.ramp_meter_id is None: return
+
+        # 1. Get new measurement: O(k-1)
+        current_occupancy = self._get_downstream_occupancy()
+
+        # 2. Calculate new metering rate r(k) using PI-ALINEA law
+        # r(k) = r(k-1) + Kp * (O(k-2) - O(k-1)) + Ki * (O_crit - O(k-1))
+        occ_diff_prop = self.prev_measured_downstream_occ - current_occupancy
+        error_integral = self.CRITICAL_OCCUPANCY_PERCENT - current_occupancy
+        rate_change = self.KP * occ_diff_prop + self.KI * error_integral
+
+        new_metering_rate_vph = np.clip(
+            self.current_metering_rate_vph + rate_change,
+            self.MIN_METERING_RATE_VPH,
+            self.MAX_METERING_RATE_VPH
+        )
+
+        # 3. Update state for next iteration
+        self.current_metering_rate_vph = new_metering_rate_vph
+        self.prev_measured_downstream_occ = current_occupancy  # O(k-1) becomes O(k-2)
+
+        # 4. Convert rate to green/red times for the cycle
+        vehs_per_cycle = self.current_metering_rate_vph * (self.CYCLE_LENGTH_SEC / 3600.0)
+        if self.RAMP_SATURATION_FLOW_VPS <= 0:
+            calculated_tg_sec = self.MIN_GREEN_TIME_SEC
+        else:
+            calculated_tg_sec = vehs_per_cycle / self.RAMP_SATURATION_FLOW_VPS
+
+        self.current_green_time_sec = np.clip(
+            calculated_tg_sec,
+            self.MIN_GREEN_TIME_SEC,
+            self.CYCLE_LENGTH_SEC - self.MIN_RED_TIME_SEC
+        )
+        self.current_red_time_sec = self.CYCLE_LENGTH_SEC - self.current_green_time_sec
+
+        # 5. Start the new cycle with the green phase
+        self.is_in_green_phase_segment = True
+        if self.green_phase_index != -1:
+            self.set_phase(self.ramp_meter_id, self.green_phase_index)
+            self.set_phase_duration(self.ramp_meter_id, self.current_green_time_sec)
+        self.time_in_current_phase_segment_sec = 0.0
+
+    def step(self, action):  # action is ignored
+        if self.ramp_meter_id is None:
+            self.simulation_step()
+            self._update_log_info()
+            return
+
+        # Check if it's time to make a new PI-ALINEA decision
+        if self.time_since_last_decision_sec >= self.CYCLE_LENGTH_SEC:
+            self._perform_pialinea_update_and_set_phases()
+            self.time_since_last_decision_sec = 0.0
+
+        # Manage phase switching within the current cycle
+        if self.is_in_green_phase_segment:
+            if self.time_in_current_phase_segment_sec >= self.current_green_time_sec:
+                # Switch to red
+                self.is_in_green_phase_segment = False
+                self.time_in_current_phase_segment_sec = 0.0
+                if self.red_phase_index != -1:
+                    self.set_phase(self.ramp_meter_id, self.red_phase_index)
+                    self.set_phase_duration(self.ramp_meter_id, self.current_red_time_sec)
+
+        # Advance simulation and timers
+        self.simulation_step()
+        self.time_since_last_decision_sec += self.sim_step_length
+        self.time_in_current_phase_segment_sec += self.sim_step_length
+
+        self._update_log_info()
+
+    def _update_log_info(self):
+        super()._update_log_info()  # Collects common metrics
+        self._last_step_info["baseline_specific_action"] = "PiAlinea"
+        self._last_step_info["pialinea_measured_downstream_occ_percent"] = self.last_measured_downstream_occ
+        self._last_step_info["pialinea_prev_downstream_occ_percent"] = self.prev_measured_downstream_occ
+        self._last_step_info["pialinea_current_metering_rate_vph"] = self.current_metering_rate_vph
+        self._last_step_info["pialinea_target_green_time_sec"] = self.current_green_time_sec
+        self._last_step_info["pialinea_target_red_time_sec"] = self.current_red_time_sec
+        self._last_step_info["pialinea_is_in_green_segment"] = self.is_in_green_phase_segment
+        self._last_step_info["pialinea_time_in_current_segment_sec"] = self.time_in_current_phase_segment_sec
+        self._last_step_info["pialinea_time_since_last_decision_sec"] = self.time_since_last_decision_sec

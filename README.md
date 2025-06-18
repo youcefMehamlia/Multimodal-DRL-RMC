@@ -1,7 +1,8 @@
 ## DQN - Intelligent Ramp Metering Control with NO Partial Detection
 
-It is the first version (0.1), that uses a predefined fixed rou.xml file and simple macro state 
+It is the first version (1.5), that uses a predefined fixed rou.xml file and simple macro state 
 vector for state representation, all data are coming from Sumo, no real historical data integration
+changes in the reward function, added pi alinea baseline and added performance comaprison of TTT and delay
 
 Arxiv: http://arxiv.org/abs/2109.14337 (Romain Ducrocq, Nadir Farhi)  
 

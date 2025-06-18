@@ -308,7 +308,24 @@ class RLController(SumoEnv):
     def _reward_outflow_speed(self):
         norm_speed = np.clip(self.processed_mainline_speed_downstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
         return norm_speed
-
+    def _reward_upstream_speed(self):
+        norm_speed = np.clip(self.processed_speed_upstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
+        return norm_speed
+    
+    def _reward_merging_speed(self):
+        norm_speed = np.clip(self.processed_speed_bottleneck_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
+        return norm_speed
+    
+    def _penalty_bottleneck_occ(self):
+        norm_occ = np.clip(self.processed_occ_bottleneck_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 1.0), 0, 1)
+        return -1.0 * (norm_occ ** 2)
+    
+    def _penalty_upstream_occ(self):
+        norm_occ = np.clip(self.processed_occ_upstream_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 1.0), 0, 1)
+        return -1.0 * (norm_occ ** 2)
+    
+    
+    
     def _reward_throughput(self):
         max_possible_throughput = self.MAX_LANE_FLOW_VPH * self.get_edge_lane_n(self.DOWNSTREAM_EDGE) if self.get_edge_lane_n(self.DOWNSTREAM_EDGE) > 0 else self.MAX_LANE_FLOW_VPH
         norm_throughput = np.clip(self.processed_mainline_flow_downstream_vph / (max_possible_throughput if max_possible_throughput > 0 else 1.0), 0, 1)
@@ -318,41 +335,71 @@ class RLController(SumoEnv):
         norm_queue = np.clip(self.processed_ramp_queue_veh / (self.MAX_RAMP_QUEUE_VEH if self.MAX_RAMP_QUEUE_VEH > 0 else 1.0), 0, 1)
         return -1.0 * (norm_queue ** 2)
 
-    def _penalty_bottleneck_occ(self):
-        norm_occ = np.clip(self.processed_occ_bottleneck_percent / self.MAX_OCCUPANCY_PERCENT, 0, 1)
-        critical_occ_threshold = 0.23 
-        if norm_occ > critical_occ_threshold:
-            denominator = (1.0 - critical_occ_threshold)
-            if denominator < 1e-6: denominator = 1e-6 # Avoid division by zero
-            return -1.0 * ((norm_occ - critical_occ_threshold) / denominator)**2
-        return 0.0
+    
+    def reward_merging_throughput(self):
+        max_possible_throughput = self.MAX_LANE_FLOW_VPH * self.get_edge_lane_n(self.MERGING_EDGE) if self.get_edge_lane_n(self.MERGING_EDGE) > 0 else self.MAX_LANE_FLOW_VPH
+        norm_throughput = np.clip(self.processed_flow_merging_vph / (max_possible_throughput if max_possible_throughput > 0 else 1.0), 0, 1)
+        return norm_throughput
+
+
 
     def _penalty_spillback(self):
-        spillback_threshold_veh = self.MAX_RAMP_QUEUE_VEH * 0.9 
+        spillback_threshold_veh = 0.9 * self.MAX_RAMP_QUEUE_VEH  # The queue length where spillback begins
+        
+            
+        # If queue is past the threshold but not over capacity, use a graded penalty
         if self.processed_ramp_queue_veh > spillback_threshold_veh:
             denominator = (self.MAX_RAMP_QUEUE_VEH - spillback_threshold_veh)
             if denominator < 1e-6 : denominator = 1e-6 # Avoid division by zero
+            
+            # This calculates how "far into" the spillback zone we are, from 0.0 to 1.0
             spill_amount = (self.processed_ramp_queue_veh - spillback_threshold_veh) / denominator
-            return -5.0 * np.clip(spill_amount, 0, 1)
+            
+            # The penalty scales from 0 to -1. The final weight is handled in _calculate_reward
+            return -1.0 * np.clip(spill_amount, 0, 1)
+            
         return 0.0
-
+    
     def _calculate_reward(self):
-        w_speed = 1.5
-        w_throughput = 2.0
+    # --- Weights for each component ---
+        # Give more weight to the critical merging and upstream areas
+        w_speed_merge = 1.5   # Most important speed
+        w_speed_up = 1.0      # Second most important
+        w_speed_down = 0.5    # Least important, just for stability
+
+        # Penalties
+        w_occ_bottle = 2.0    # Occupancy in the bottleneck is a key indicator of collapse
+        w_occ_upstream = 1.0   # Upstream occupancy is also important, but less than bottleneck
         w_queue = 1.0
-        w_occ_bottle = 1.5
-        w_spillback = 1.0
-        r_speed = self._reward_outflow_speed()
-        r_throughput = self._reward_throughput()
-        p_queue = self._penalty_ramp_queue()
+        w_spillback = 20.0    # A very large weight to make spillback catastrophic
+
+        # --- Calculate each component ---
+        # (+) REWARDS for good mainline conditions
+        # Use the specific speed rewards you already wrote!
+        r_speed_merge = self._reward_merging_speed()
+        r_speed_up = self._reward_upstream_speed()
+        r_speed_down = self._reward_outflow_speed() # Renamed from r_speed for clarity
+
+        # (-) PENALTIES for bad conditions
         p_occ_bottle = self._penalty_bottleneck_occ()
-        p_spillback = self._penalty_spillback()
-        reward = (w_speed * r_speed +
-                    w_throughput * r_throughput +
-                    w_queue * p_queue +
-                    w_occ_bottle * p_occ_bottle +
-                    w_spillback * p_spillback)
+        p_occ_upstream = self._penalty_upstream_occ()  # This is already negative, so we add it directly
+        p_queue = self._penalty_ramp_queue()
+        # The spillback function returns a negative value, so we add it directly.
+        # The weight w_spillback will make it highly punitive.
+        p_spillback = self._penalty_spillback() 
+
+        # --- Combine into the final reward ---
+        reward = ( (w_speed_merge * r_speed_merge) +
+                (w_speed_up * r_speed_up) +
+                (w_speed_down * r_speed_down) +
+                (w_occ_bottle * p_occ_bottle) +  # This is already negative
+                (w_occ_upstream * p_occ_upstream) +  # This is already negative
+                (w_queue * p_queue) +            # This is already negative
+                (w_spillback * p_spillback) )    # This is already negative
+
         return float(reward)
+
+
 
 
     def obs(self):
