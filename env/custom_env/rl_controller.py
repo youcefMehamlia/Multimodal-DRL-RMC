@@ -140,13 +140,13 @@ class RLController(SumoEnv):
         
         self.processed_ramp_queue_veh = self.sum_queue / self.CYCLE_DURATION_SEC if self.CYCLE_DURATION_SEC > 0 else 0.0
         
-        self.processed_flow_lane_0_merging_vph = self.get_loops_flow_interval(self.bottleneck_detector_ids_state[0], 0, self.CYCLE_DURATION_SEC)
-        self.processed_occ_lane_0_bottleneck_percent = self.get_loops_occupancy_interval(self.bottleneck_detector_ids_state[0], 0)
-        self.processed_speed_lane_0_bottleneck_mps = self.get_loops_flow_weigthed_mean_speed(self.bottleneck_detector_ids_state[0], 0)
+        self.processed_flow_lane_0_merging_vph = self.get_loops_flow_interval([self.bottleneck_detector_ids_state[0]],  self.CYCLE_DURATION_SEC)
+        self.processed_occ_lane_0_bottleneck_percent = self.get_loops_occupancy_interval([self.bottleneck_detector_ids_state[0]])
+        self.processed_speed_lane_0_bottleneck_mps = self.get_loops_flow_weigthed_mean_speed([self.bottleneck_detector_ids_state[0]])
         
-        self.processed_flow_lane_0_upstream_vph = self.get_loops_flow_interval(self.upstream_detector_ids_state[1], 0, self.CYCLE_DURATION_SEC)
-        self.processed_occ_lane_0_upstream_percent = self.get_loops_occupancy_interval(self.upstream_detector_ids_state[1], 0)
-        self.processed_speed_lane_0_upstream_mps = self.get_loops_flow_weigthed_mean_speed(self.upstream_detector_ids_state[1], 0)
+        self.processed_flow_lane_0_upstream_vph = self.get_loops_flow_interval([self.upstream_detector_ids_state[1]],  self.CYCLE_DURATION_SEC)
+        self.processed_occ_lane_0_upstream_percent = self.get_loops_occupancy_interval([self.upstream_detector_ids_state[1]])
+        self.processed_speed_lane_0_upstream_mps = self.get_loops_flow_weigthed_mean_speed([self.upstream_detector_ids_state[1]])
        
 
     def reset(self):
