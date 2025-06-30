@@ -41,7 +41,7 @@ class Agent(metaclass=ABCMeta):
         self.step = 0
         self.resume_step = 0
         self.episode_count = 0
-        self.ep_info_buffer = deque([], maxlen=100)
+        self.ep_info_buffer = deque([], maxlen=50)
 
         path = algo + '_lr' + str(lr)
         self.save_path = save_dir + path + '_' + 'model.pack'

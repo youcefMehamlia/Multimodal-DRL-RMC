@@ -38,7 +38,7 @@ HYPER_PARAMS = {
     'target_soft_update': True,                 # Target network soft update
     'target_soft_update_tau': 1e-3,             # Target network soft update tau rate
     'save_freq': 10000, # Save frequency (e.g., every 10 episodes, in agent steps)
-    'log_freq': 9000,  # Log frequency (e.g., twice per episode, in agent steps)
+    'log_freq': 4500,  # Log frequency (e.g., twice per episode, in agent steps)
     'save_dir': './save/' + CONFIG + "/",       # Save directory
     'log_dir': './logs/train/' + CONFIG + "/",  # Log directory
     'load': True,                               # Load model if exists
