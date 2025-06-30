@@ -9,7 +9,7 @@ from .utils import SUMO_PARAMS # Make sure SUMO_PARAMS includes 'v_max_speed'
 # Import standard Python libraries.
 import sys
 import json
-# import random # Not used in this snippet
+import random 
 # import numpy as np # Not used in this snippet
 # from itertools import permutations # Not used in this snippet
 
@@ -85,9 +85,9 @@ class SumoEnv:
         # (5m veh + 2.5m gap = 7.5m per veh). 204 / 7.5 ~ 27 veh.
         self.MAX_RAMP_QUEUE_VEH = self.args.get("max_ramp_queue_veh", 25)
         self.MAX_LANE_FLOW_VPH = self.args.get("max_lane_flow_vph", 1900) # veh/hr/lane
-        # self.MAX_FLOW_UPSTREAM_VPH = self.args.get("max_flow_upstream_vph", 5490) # veh/hr
-        # self.MAX_FLOW_MERGING_VPH = self.args.get("max_flow_merging_vph", 5490) # veh/hr
-        # self.MAX_FLOW_DOWNSTREAM_VPH = self.args.get("max_flow_downstream_vph", 5760)
+        self.MAX_FLOW_UPSTREAM_VPH = self.args.get("max_flow_upstream_vph", 5490) # veh/hr
+        self.MAX_FLOW_MERGING_VPH = self.args.get("max_flow_merging_vph", 5490) # veh/hr
+        self.MAX_FLOW_DOWNSTREAM_VPH = self.args.get("max_flow_downstream_vph", 5760)
         self.MAX_OCCUPANCY_PERCENT = 100.0
         
         # Set final flags based on constructor arguments.
@@ -95,9 +95,16 @@ class SumoEnv:
         self.log = log
         self.rnd_params = rnd # Store rnd for potential use
         self.seed = self.args.get("seed", False) # Optional seed for reproducibility
+        self.ep_count = 0
+
+        # --- ADD THIS LINE ---
+        # Generate the first route file before starting SUMO
+        self._generate_route_file() 
+        
         # Generate the final SUMO command-line parameters.
         self.params = self.set_params()
-        self.ep_count = 0
+        
+        
 
         # Start TraCI connection
         try:
@@ -126,7 +133,7 @@ class SumoEnv:
             params += [
                 "--delay", str(self.args.get("delay", 0)),
                 "--start", "true",
-                "--quit-on-end", "false" # Keep SUMO open after simulation ends
+                "--quit-on-end", "true" # Keep SUMO open after simulation ends
             ]
             gui_settings_file = self.SUMO_ENV + "data/" + self.config + "/gui-settings.cfg"
             # Only add gui-settings-file if it exists, to avoid SUMO error
@@ -157,8 +164,13 @@ class SumoEnv:
 
     def simulation_reset(self):
         self.stop()
+        self.ep_count += 1 # Increment episode count on reset
+        
+        # --- ADD THIS LINE ---
+        # Generate a new route file for the new episode before starting SUMO
+        self._generate_route_file()
+        
         self.start()
-        self.ep_count +=1 # Increment episode count on reset
 
     def simulation_step(self):
         try:
@@ -341,6 +353,70 @@ class SumoEnv:
         except traci.TraCIException:
             return 0.0 # Or handle as error
 
+
+    def _generate_route_file(self):
+            """
+            Generates a new .rou.xml file for the simulation with randomized
+            traffic flows based on weighted choices and a random penetration
+            rate for connected vehicles.
+            """
+            # Select total flows for each route using weighted random choice
+            main_flow = random.choices(
+                self.args["veh_per_hour_main"],
+                weights=self.args["veh_per_hour_main_weights"]
+            )[0]
+            on_ramp_flow = random.choices(
+                self.args["veh_per_hour_on_ramp"],
+                weights=self.args["veh_per_hour_on_ramp_weights"]
+            )[0]
+            off_ramp_flow = random.choices(
+                self.args["veh_per_hour_off_ramp"],
+                weights=self.args["veh_per_hour_off_ramp_weights"]
+            )[0]
+
+            # Generate a random penetration rate for connected vehicles
+            min_pen, max_pen = self.args["con_penetration_rate_range"]
+            pen_rate = random.uniform(min_pen, max_pen)
+
+            # Calculate the number of vehicles for each type (connected vs. default)
+            main_con = int(main_flow * pen_rate)
+            main_def = int(main_flow * (1 - pen_rate))
+            on_ramp_con = int(on_ramp_flow * pen_rate)
+            on_ramp_def = int(on_ramp_flow * (1 - pen_rate))
+            off_ramp_con = int(off_ramp_flow * pen_rate)
+            off_ramp_def = int(off_ramp_flow * (1 - pen_rate))
+
+            # NOTE: The <route> definitions below are hardcoded from 1 ramp.
+            # For other networks (e.g., 3ramp_...), we need to make these dynamic
+            # or create separate generation functions.
+            xml_content = f"""<!-- Generated on-the-fly for episode {self.ep_count + 1} -->
+    <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+        <!-- Vehicle Type Definitions -->
+        <vType id="def" vClass="passenger" length="5.0" minGap="2.5" accel="2.6" decel="4.5" maxSpeed="35" sigma="0.9" />
+        <vType id="con" vClass="passenger" length="5.0" minGap="2.5" accel="2.6" decel="4.5" maxSpeed="35" sigma="0.8" color="1,0,0" />
+
+        <!-- Route Definitions -->
+        <route id="entry_to_end_main_road" edges="entry off_ramp_up_stream main_road acceleration_area end_main_road" />
+        <route id="entry_to_off_ramp" edges="entry off_ramp_up_stream off_ramp_beginning off_ramp" />
+        <route id="on_ramp_to_end_main_road" edges="on_ramp passage_area acceleration_area end_main_road" />
+
+        <!-- Flow Definitions -->
+        <flow id="main_con" type="con" vehsPerHour="{main_con}" route="entry_to_end_main_road" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+        <flow id="main_def" type="def" vehsPerHour="{main_def}" route="entry_to_end_main_road" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+        <flow id="on_ramp_con" type="con" vehsPerHour="{on_ramp_con}" route="on_ramp_to_end_main_road" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+        <flow id="on_ramp_def" type="def" vehsPerHour="{on_ramp_def}" route="on_ramp_to_end_main_road" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+        <flow id="off_ramp_con" type="con" vehsPerHour="{off_ramp_con}" route="entry_to_off_ramp" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+        <flow id="off_ramp_def" type="def" vehsPerHour="{off_ramp_def}" route="entry_to_off_ramp" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+    </routes>
+    """
+            # Write the content to the .rou.xml file, overwriting the previous one
+            route_file_path = self.data_dir + self.config + ".rou.xml"
+            with open(route_file_path, "w") as f:
+                f.write(xml_content)
+            
+            print(f"Generated new route file for Ep {self.ep_count + 1}: Main={main_flow}, Ramp={on_ramp_flow}, PenRate={pen_rate:.2f}")
+
     # --- Logging Information ---
     def log_info(self):
         """
@@ -353,6 +429,7 @@ class SumoEnv:
         log_data = {
             "sim_time": self.get_current_time(),
             "episode": self.ep_count,
+            
             # The actual state and reward values will be added by RLController
             # when it prepares its info dict.
         }

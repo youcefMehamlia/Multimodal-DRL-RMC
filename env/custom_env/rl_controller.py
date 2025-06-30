@@ -10,6 +10,7 @@ class RLController(SumoEnv):
 
         # --- RLController Specific Initializations ---
         self.CYCLE_DURATION_SEC = 40.0
+        self.ty = 3 # duration of the yellow light cycle in seconds
         # self.sim_step_length is inherited from SumoEnv, fetched after traci.start()
 
         # Action Space Definition
@@ -34,7 +35,7 @@ class RLController(SumoEnv):
         self.ramp_queue_detector_id = "queue_sens"
 
         # ---- Observation Space Definition ----
-        self.observation_space_n = 8
+        self.observation_space_n = 14
 
         # ---- State Variables for RL control cycle ----
         self.last_action_value_sec = self.green_time_actions_sec[0] # Store the actual green time value
@@ -139,6 +140,13 @@ class RLController(SumoEnv):
         
         self.processed_ramp_queue_veh = self.sum_queue / self.CYCLE_DURATION_SEC if self.CYCLE_DURATION_SEC > 0 else 0.0
         
+        self.processed_flow_lane_0_merging_vph = self.get_loops_flow_interval(self.bottleneck_detector_ids_state[0], 0, self.CYCLE_DURATION_SEC)
+        self.processed_occ_lane_0_bottleneck_percent = self.get_loops_occupancy_interval(self.bottleneck_detector_ids_state[0], 0)
+        self.processed_speed_lane_0_bottleneck_mps = self.get_loops_flow_weigthed_mean_speed(self.bottleneck_detector_ids_state[0], 0)
+        
+        self.processed_flow_lane_0_upstream_vph = self.get_loops_flow_interval(self.upstream_detector_ids_state[1], 0, self.CYCLE_DURATION_SEC)
+        self.processed_occ_lane_0_upstream_percent = self.get_loops_occupancy_interval(self.upstream_detector_ids_state[1], 0)
+        self.processed_speed_lane_0_upstream_mps = self.get_loops_flow_weigthed_mean_speed(self.upstream_detector_ids_state[1], 0)
        
 
     def reset(self):
@@ -284,15 +292,23 @@ class RLController(SumoEnv):
 
 
     def _get_current_observation(self):
-        norm_flow_upstream = np.clip(self.processed_flow_upstream_vph / (self.MAX_LANE_FLOW_VPH * self.get_edge_lane_n(self.UPSTREAM_EDGE) if self.get_edge_lane_n(self.UPSTREAM_EDGE) > 0 else self.MAX_LANE_FLOW_VPH), 0, 1)
-        norm_flow_merging = np.clip(self.processed_flow_merging_vph / (self.MAX_LANE_FLOW_VPH * self.get_edge_lane_n(self.MERGING_EDGE) if self.get_edge_lane_n(self.MERGING_EDGE) > 0 else self.MAX_LANE_FLOW_VPH), 0, 1)
+        norm_flow_upstream = np.clip(self.processed_flow_upstream_vph / self.MAX_FLOW_UPSTREAM_VPH, 0, 1)
+        norm_flow_merging = np.clip(self.processed_flow_merging_vph / self.MAX_FLOW_MERGING_VPH, 0, 1)
         norm_occ_upstream = np.clip(self.processed_occ_upstream_percent / self.MAX_OCCUPANCY_PERCENT, 0, 1)
         norm_speed_upstream = np.clip(self.processed_speed_upstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
         norm_occ_bottleneck = np.clip(self.processed_occ_bottleneck_percent / self.MAX_OCCUPANCY_PERCENT, 0, 1)
         norm_speed_bottleneck = np.clip(self.processed_speed_bottleneck_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
         norm_ramp_queue = np.clip(self.processed_ramp_queue_veh / (self.MAX_RAMP_QUEUE_VEH if self.MAX_RAMP_QUEUE_VEH > 0 else 1.0), 0, 1)
+        norm_flow_lane_0_bottleneck = np.clip(self.processed_flow_lane_0_merging_vph / (self.MAX_LANE_FLOW_VPH *  self.MAX_LANE_FLOW_VPH), 0, 1)
+        norm_flow_lane_0_upstream = np.clip(self.processed_flow_lane_0_upstream_vph / (self.MAX_LANE_FLOW_VPH * self.MAX_LANE_FLOW_VPH), 0, 1)
+        norm_occ_lane_0_bottleneck = np.clip(self.processed_occ_lane_0_bottleneck_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 0.0), 0, 1)
+        norm_speed_lane_0_bottleneck = np.clip(self.processed_speed_lane_0_bottleneck_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
+        norm_occ_lane_0_upstream = np.clip(self.processed_occ_lane_0_upstream_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 0.0) , 0, 1)
+        norm_speed_lane_0_upstream = np.clip(self.processed_speed_lane_0_upstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
+        
         norm_last_action = np.clip(self.last_action_value_sec / (self.CYCLE_DURATION_SEC if self.CYCLE_DURATION_SEC > 0 else 1.0), 0, 1)
-
+        
+        
         state = np.array([
             norm_flow_upstream,
             norm_flow_merging,
@@ -301,6 +317,12 @@ class RLController(SumoEnv):
             norm_occ_bottleneck,
             norm_speed_bottleneck,
             norm_ramp_queue,
+            norm_flow_lane_0_bottleneck,
+            norm_flow_lane_0_upstream,
+            norm_occ_lane_0_bottleneck,
+            norm_speed_lane_0_bottleneck,
+            norm_occ_lane_0_upstream,
+            norm_speed_lane_0_upstream,
             norm_last_action
         ], dtype=np.float32)
         return state
@@ -318,11 +340,11 @@ class RLController(SumoEnv):
     
     def _penalty_bottleneck_occ(self):
         norm_occ = np.clip(self.processed_occ_bottleneck_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 1.0), 0, 1)
-        return -1.0 * (norm_occ ** 2)
+        return -1.0 * norm_occ 
     
     def _penalty_upstream_occ(self):
         norm_occ = np.clip(self.processed_occ_upstream_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 1.0), 0, 1)
-        return -1.0 * (norm_occ ** 2)
+        return -1.0 * norm_occ
     
     
     
@@ -333,7 +355,7 @@ class RLController(SumoEnv):
 
     def _penalty_ramp_queue(self):
         norm_queue = np.clip(self.processed_ramp_queue_veh / (self.MAX_RAMP_QUEUE_VEH if self.MAX_RAMP_QUEUE_VEH > 0 else 1.0), 0, 1)
-        return -1.0 * (norm_queue ** 2)
+        return -1.0 * norm_queue 
 
     
     def reward_merging_throughput(self):
