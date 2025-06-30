@@ -15,7 +15,7 @@ CONFIG = SUMO_PARAMS.get("config", "1ramp_1x3")
 # Review these carefully, especially step-based ones.
 # One agent step = 40 simulation seconds.
 # Example: If an episode is 3600s (SUMO_PARAMS["steps"]), then max_episode_steps = 3600 / 40 = 90
-MAX_SIMULATION_SECONDS_PER_EPISODE = SUMO_PARAMS.get("steps", 9000)
+MAX_SIMULATION_SECONDS_PER_EPISODE = SUMO_PARAMS.get("steps", 3600)
 AGENT_CONTROL_CYCLE_SEC = 40.0 # From RLController
 MAX_AGENT_STEPS_PER_EPISODE = int(MAX_SIMULATION_SECONDS_PER_EPISODE / AGENT_CONTROL_CYCLE_SEC)
 
@@ -26,25 +26,25 @@ HYPER_PARAMS = {
     'lr': 1e-4,                                 # Learning rate
     'gamma': 0.99,                              # Discount factor
     'eps_start': 1.0,                           # Epsilon start
-    'eps_min': 0.05,                            # Epsilon min (0.01 might be too low initially for harder problems)
-    'eps_dec': 25000,                           # Epsilon decay steps (e.g., for ~1 million sim seconds: 1M/40 = 25k agent steps)
+    'eps_min': 0.01,                            # Epsilon min (0.01 might be too low initially for harder problems)
+    'eps_dec': 1e6,                           # Epsilon decay steps (e.g., for ~1 million sim seconds: 1M/40 = 25k agent steps)
                                                 # Adjust based on total training time desired.
     'eps_dec_exp': True,                        # Epsilon exponential decay
-    'bs': 64,                                   # Batch size (was 32, 64 is also common)
-    'min_mem': 10000,                           # Replay memory buffer min size (e.g., 10k agent steps * 40s/step = 400k sim seconds worth)
+    'bs': 32,                                   # Batch size (was 32, 64 is also common)
+    'min_mem': 100000,                           # Replay memory buffer min size (e.g., 10k agent steps * 40s/step = 400k sim seconds worth)
                                                 # This means ~111 episodes of 3600s to fill if min_mem = 10k agent steps.
-    'max_mem': 100000,                          # Replay memory buffer max size (100k agent steps * 40s/step = 4M sim seconds)
-    'target_update_freq': 500,                  # Target network update frequency (in agent steps, e.g., every 500*40 = 20k sim seconds)
+    'max_mem': 1000000,                          # Replay memory buffer max size (100k agent steps * 40s/step = 4M sim seconds)
+    'target_update_freq': 30000,                  # Target network update frequency (in agent steps, e.g., every 500*40 = 20k sim seconds)
     'target_soft_update': True,                 # Target network soft update
     'target_soft_update_tau': 1e-3,             # Target network soft update tau rate
-    'save_freq': MAX_AGENT_STEPS_PER_EPISODE * 10, # Save frequency (e.g., every 10 episodes, in agent steps)
-    'log_freq': MAX_AGENT_STEPS_PER_EPISODE // 2,  # Log frequency (e.g., twice per episode, in agent steps)
+    'save_freq': 10000, # Save frequency (e.g., every 10 episodes, in agent steps)
+    'log_freq': 9000,  # Log frequency (e.g., twice per episode, in agent steps)
     'save_dir': './save/' + CONFIG + "/",       # Save directory
     'log_dir': './logs/train/' + CONFIG + "/",  # Log directory
     'load': True,                               # Load model if exists
     'repeat': 0,                                # Repeat action (not applicable here as 1 action = 40s cycle)
-    'max_episode_steps': 9000, # Max agent steps (40s cycles) per episode
-    'max_total_steps': 0,                       # Max total training agent steps if > 0, else inf training
+    'max_episode_steps': 1000, # Max agent steps (40s cycles) per episode
+    'max_total_steps': 2e6,                       # Max total training agent steps if > 0, else inf training
                                                 # e.g., 50000 for 2M sim seconds of training (50000 * 40s)
     'algo': 'DuelingDoubleDQNAgent'             # DQNAgent
                                                 # DoubleDQNAgent
