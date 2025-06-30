@@ -5,3 +5,16 @@ env/custom_env/works1.0-cleaned_with_vhour/
 logs/test/data/
 logs/test/img/
 logs/test/alinea/
+
+
+# Python specific
+__pycache__/
+
+
+# Distribution / packaging
+*.egg-info/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd

@@ -9,6 +9,7 @@ import random
 import numpy as np
 from collections import deque
 from datetime import timedelta
+from colorama import Fore
 
 import torch as T
 from torch.utils.tensorboard import SummaryWriter
@@ -135,7 +136,7 @@ class Agent(metaclass=ABCMeta):
             print('Avg Rew: ', rew_mean)
             print('Avg Ep Len: ', len_mean)
             print('Episodes: ', self.episode_count)
-            print('---', str(timedelta(seconds=round((time.time() - self.start_time), 0))), '---')
+            print(Fore.LIGHTRED_EX,'---', str(timedelta(seconds=round((time.time() - self.start_time), 0))), '---', Fore.RESET)
 
             self.summary_writer.add_scalar('AvgRew', rew_mean, global_step=(self.step * self.n_env))
             self.summary_writer.add_scalar('AvgEpLen', len_mean, global_step=(self.step * self.n_env))

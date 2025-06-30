@@ -43,7 +43,7 @@ SUMO_PARAMS = {
     "veh_per_hour_off_ramp_weights": [0.4, 0.4, 0.2], # Sums to 1.0 (Example weights)
 
     
-    "con_penetration_rate_range": [0.0, 1.0],
+    "con_penetration_rate_range": [0.01, 0.99],  ## updated 
 
     "v_type_def": "def", # The ID of the default vehicle type.
     "v_type_con": "con", # The ID of the connected vehicle type.

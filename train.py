@@ -6,6 +6,7 @@ import time
 import argparse
 import itertools
 from datetime import timedelta
+from colorama import Fore
 
 
 class Train:
@@ -45,7 +46,7 @@ class Train:
             algo=args.algo,
             gpu=args.gpu
         )
-
+        print(Fore.LIGHTYELLOW_EX, self.agent.device, Fore.RESET)
         self.agent.load_model()
 
         print()
@@ -77,7 +78,7 @@ class Train:
 
             if (t+1) % (10000 // self.agent.n_env) == 0:
                 print(str((t+1) * self.agent.n_env) + ' / ' + str(self.agent.min_buffer_size))
-                print('---', str(timedelta(seconds=round((time.time() - self.agent.start_time), 0))), '---')
+                print(Fore.LIGHTRED_EX, '---', str(timedelta(seconds=round((time.time() - self.agent.start_time), 0))), '---', Fore.RESET)
 
     def train_loop(self):
         print()

@@ -1,6 +1,6 @@
 import time
 
-from gym.core import Wrapper
+from gymnasium.core import Wrapper
 
 
 class Monitor(Wrapper):

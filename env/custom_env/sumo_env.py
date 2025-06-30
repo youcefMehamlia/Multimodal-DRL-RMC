@@ -10,6 +10,7 @@ from .utils import SUMO_PARAMS # Make sure SUMO_PARAMS includes 'v_max_speed'
 import sys
 import json
 import random 
+from colorama import Fore
 # import numpy as np # Not used in this snippet
 # from itertools import permutations # Not used in this snippet
 
@@ -120,11 +121,13 @@ class SumoEnv:
     def set_params(self):
         sumocfg_path = self.data_dir + self.config + ".sumocfg"
         params = [
-            SUMO_HOME + "bin/sumo" + ("-gui" if self.gui else ""),
+            "sumo" + ("-gui" if self.gui else ""),
             "-c", sumocfg_path,
             "--tripinfo-output", self.data_dir + "tripinfo.xml", # Ensure this dir exists
             "--time-to-teleport", str(self.args.get("time_to_teleport", self.args["steps"])), # Default to steps if not specified
             "--waiting-time-memory", str(self.args.get("waiting_time_memory", self.args["steps"])),
+            "--log", "log", #! added
+            "--no-warnings", "true",  #! added
     
         ]
         if self.seed:
@@ -408,14 +411,15 @@ class SumoEnv:
         <flow id="on_ramp_def" type="def" vehsPerHour="{on_ramp_def}" route="on_ramp_to_end_main_road" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
         <flow id="off_ramp_con" type="con" vehsPerHour="{off_ramp_con}" route="entry_to_off_ramp" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
         <flow id="off_ramp_def" type="def" vehsPerHour="{off_ramp_def}" route="entry_to_off_ramp" begin="0" end="{self.args['steps']}" departLane="best" departPos="random" departSpeed="max" />
+
     </routes>
-    """
+    """ 
             # Write the content to the .rou.xml file, overwriting the previous one
             route_file_path = self.data_dir + self.config + ".rou.xml"
             with open(route_file_path, "w") as f:
                 f.write(xml_content)
             
-            print(f"Generated new route file for Ep {self.ep_count + 1}: Main={main_flow}, Ramp={on_ramp_flow}, PenRate={pen_rate:.2f}")
+            print(Fore.LIGHTMAGENTA_EX, f"Generated new route file for Ep {self.ep_count + 1}: Main={main_flow}, Ramp={on_ramp_flow}, PenRate={pen_rate:.2f}", Fore.RESET)
 
     # --- Logging Information ---
     def log_info(self):
