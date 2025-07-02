@@ -27,7 +27,7 @@ HYPER_PARAMS = {
     'gamma': 0.99,                              # Discount factor
     'eps_start': 1.0,                           # Epsilon start
     'eps_min': 0.01,                            # Epsilon min (0.01 might be too low initially for harder problems)
-    'eps_dec': 1e6,                           # Epsilon decay steps (e.g., for ~1 million sim seconds: 1M/40 = 25k agent steps)
+    'eps_dec': 2e6,                           # Epsilon decay steps (e.g., for ~1 million sim seconds: 1M/40 = 25k agent steps)
                                                 # Adjust based on total training time desired.
     'eps_dec_exp': True,                        # Epsilon exponential decay
     'bs': 32,                                   # Batch size (was 32, 64 is also common)
@@ -44,7 +44,7 @@ HYPER_PARAMS = {
     'load': True,                               # Load model if exists
     'repeat': 0,                                # Repeat action (not applicable here as 1 action = 40s cycle)
     'max_episode_steps': 1000, # Max agent steps (40s cycles) per episode
-    'max_total_steps': 2e6,                       # Max total training agent steps if > 0, else inf training
+    'max_total_steps': 21e5,                       # Max total training agent steps if > 0, else inf training
                                                 # e.g., 50000 for 2M sim seconds of training (50000 * 40s)
     'algo': 'DuelingDoubleDQNAgent'             # DQNAgent
                                                 # DoubleDQNAgent
