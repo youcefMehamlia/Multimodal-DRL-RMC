@@ -329,7 +329,7 @@ class SumoEnv:
             except traci.TraCIException:
                 print(f"Warning: SumoEnv - Could not get data for loop {loop_id}")
             #in Km/h
-        return ((total_speed / total_flow)*3.6) if total_flow > 0 else 0.0 #return in km/h
+        return ((total_speed / total_flow)) if total_flow > 0 else 0.0 #return in m/s
         
     # --- Other existing helpers if needed (getLastStep versions, vehicle specific, etc.) ---
     def get_edge_ls_queue_length_vehicles(self, edge_id):

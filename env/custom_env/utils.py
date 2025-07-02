@@ -51,7 +51,7 @@ SUMO_PARAMS = {
     # Physical Characteristics of the Vehicle
     "v_length": 5,     # The length of the vehicles (in meters).
     "v_min_gap": 2.5,   # The minimum gap (in meters) between vehicles.
-    "v_max_speed": 27.33, # The maximum speed of the vehicles (in m/s, ~100 km/h).
+    "v_max_speed": 35, # The maximum speed of the vehicles (in m/s, ~100 km/h).
     "rnd":(False, False),
 
     "con_range": 160, # Communication range for Connected vehicles (in meters).
