@@ -35,7 +35,9 @@ class RLController(SumoEnv):
         self.ramp_queue_detector_id = "queue_sens"
 
         # ---- Observation Space Definition ----
-        self.observation_space_n = 14
+        self.MACRO_STATE_SIZE = 14
+        grid_flat_size = self.grid_rows * self.grid_cols * self.grid_channels
+        self.observation_space_n = self.MACRO_STATE_SIZE + grid_flat_size #to be reviewed
 
         # ---- State Variables for RL control cycle ----
         self.last_action_value_sec = self.green_time_actions_sec[0] # Store the actual green time value
@@ -292,6 +294,7 @@ class RLController(SumoEnv):
 
 
     def _get_current_observation(self):
+        # ---- Part 1: Original Macro-State (Vector) ----
         norm_flow_upstream = np.clip(self.processed_flow_upstream_vph / self.MAX_FLOW_UPSTREAM_VPH, 0, 1)
         norm_flow_merging = np.clip(self.processed_flow_merging_vph / self.MAX_FLOW_MERGING_VPH, 0, 1)
         norm_occ_upstream = np.clip(self.processed_occ_upstream_percent / self.MAX_OCCUPANCY_PERCENT, 0, 1)
@@ -305,28 +308,26 @@ class RLController(SumoEnv):
         norm_speed_lane_0_bottleneck = np.clip(self.processed_speed_lane_0_bottleneck_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
         norm_occ_lane_0_upstream = np.clip(self.processed_occ_lane_0_upstream_percent / (self.MAX_OCCUPANCY_PERCENT if self.MAX_OCCUPANCY_PERCENT > 0 else 0.0) , 0, 1)
         norm_speed_lane_0_upstream = np.clip(self.processed_speed_lane_0_upstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
-        
         norm_last_action = np.clip(self.last_action_value_sec / (self.CYCLE_DURATION_SEC if self.CYCLE_DURATION_SEC > 0 else 1.0), 0, 1)
         
-        
-        state = np.array([
-            norm_flow_upstream,
-            norm_flow_merging,
-            norm_occ_upstream,
-            norm_speed_upstream,
-            norm_occ_bottleneck,
-            norm_speed_bottleneck,
-            norm_ramp_queue,
-            norm_flow_lane_0_bottleneck,
-            norm_flow_lane_0_upstream,
-            norm_occ_lane_0_bottleneck,
-            norm_speed_lane_0_bottleneck,
-            norm_occ_lane_0_upstream,
-            norm_speed_lane_0_upstream,
-            norm_last_action
+        vector_state = np.array([
+            norm_flow_upstream, norm_flow_merging, norm_occ_upstream, norm_speed_upstream,
+            norm_occ_bottleneck, norm_speed_bottleneck, norm_ramp_queue, norm_flow_lane_0_bottleneck,
+            norm_flow_lane_0_upstream, norm_occ_lane_0_bottleneck, norm_speed_lane_0_bottleneck,
+            norm_occ_lane_0_upstream, norm_speed_lane_0_upstream, norm_last_action
         ], dtype=np.float32)
-        return state
 
+        # ---- Part 2: New Micro-State (Grid) ----
+        grid_state = self._create_grid_observation()
+        flat_grid_state = grid_state.flatten()
+
+        # ---- Part 3: Combine States ----
+        combined_state = np.concatenate((vector_state, flat_grid_state))
+        
+        return combined_state
+    
+    
+    
     def _reward_outflow_speed(self):
         norm_speed = np.clip(self.processed_mainline_speed_downstream_mps / (self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 1.0), 0, 1)
         return norm_speed

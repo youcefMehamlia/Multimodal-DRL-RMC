@@ -26,7 +26,7 @@ SUMO_PARAMS = {
     "delay": 0,   # The delay (in milliseconds) between simulation steps when running with a GUI.
     "gui": True,  # Whether to run SUMO with a graphical user interface (GUI).
     "log": False, # Whether to enable logging of simulation statistics.
-    "seed":False, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
+    "seed":True, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
     "seed_value": 42, # The seed value to use for the simulation if `seed` is True.
     "alinea_detector_period_sec": 40.0,
 
@@ -35,6 +35,8 @@ SUMO_PARAMS = {
     "veh_per_hour_main": [4000, 4500, 5000, 5500, 6000, 6500],
     "veh_per_hour_on_ramp": [1400, 1500, 1600, 1700, 1800, 1900, 2000],
     "veh_per_hour_off_ramp": [100, 300, 500],
+    
+    "generate_route_file": False,
 
    
     # Biased towards higher flows as requested.
@@ -54,6 +56,10 @@ SUMO_PARAMS = {
     "v_max_speed": 35, # The maximum speed of the vehicles (in m/s, ~100 km/h).
     "rnd":(False, False),
 
-    "con_range": 160, # Communication range for Connected vehicles (in meters).
-    "cell_length": 8 # Length of a cell on the grid (in meters).
+    "con_range": 216.0, # Communication range for Connected vehicles (in meters).
+    "cell_length": 8, # Length of a cell on the grid (in meters).
+    "grid_cols" : 5,
+    "grid_channels" : 2,
+    "grid_rows" : 27, # Number of rows in the grid. (int(216/8))
+    "vector_len" :14,
 }

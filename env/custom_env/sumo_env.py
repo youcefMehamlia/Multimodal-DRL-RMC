@@ -11,7 +11,19 @@ import sys
 import json
 import random 
 from colorama import Fore
-# import numpy as np # Not used in this snippet
+
+# CODE TO ADD/MODIFY IN sumo_env.py
+
+# ... (other imports)
+
+# Import SUMO libraries.
+try:
+    from sumolib import net  # noqa
+    import traci  # noqa
+    from traci import constants as tc 
+except ImportError:
+    sys.exit("Please declare the SUMO_HOME environment variable or ensure 'sumo/tools' is in sys.path.")
+import numpy as np 
 # from itertools import permutations # Not used in this snippet
 
 # Define the path to the SUMO installation directory.
@@ -65,7 +77,11 @@ class SumoEnv:
             print(f"Error reading net file: {self.data_dir + self.net_file_name}")
             print(e)
             sys.exit(1)
-
+        
+        # Initialize grid parameters based on the network.
+        self._initialize_grid_params_from_net()
+        
+        # Initialize traffic light IDs and ramp meter ID
         self.tl_ids = [tl.getID() for tl in self.net.getTrafficLights()]
         if not self.tl_ids:
             print("Warning: No traffic lights (ramp meters) found in the network.")
@@ -98,9 +114,10 @@ class SumoEnv:
         self.seed = self.args.get("seed", False) # Optional seed for reproducibility
         self.ep_count = 0
 
-        # --- ADD THIS LINE ---
+        self.generate_rou = self.args.get("generate_route_file", False) # Whether to generate a new route file each time
         # Generate the first route file before starting SUMO
-        self._generate_route_file() 
+        if self.generate_rou == True: # If you want to generate a new route file each time
+            self._generate_route_file() 
         
         # Generate the final SUMO command-line parameters.
         self.params = self.set_params()
@@ -136,7 +153,7 @@ class SumoEnv:
             params += [
                 "--delay", str(self.args.get("delay", 0)),
                 "--start", "true",
-                "--quit-on-end", "true" # Keep SUMO open after simulation ends
+                "--quit-on-end", "false" # Keep SUMO open after simulation ends
             ]
             gui_settings_file = self.SUMO_ENV + "data/" + self.config + "/gui-settings.cfg"
             # Only add gui-settings-file if it exists, to avoid SUMO error
@@ -149,6 +166,126 @@ class SumoEnv:
 
         return params
 
+    
+    def _initialize_grid_params_from_net(self):
+        # Grid is now 5 columns wide ---
+        self.grid_cols = 5
+        self.grid_channels = 2
+        self.cell_length_m = self.args.get("cell_length", 8.0)
+        self.accel_segment_len = 84.0
+        self.passage_segment_len = self.net.getLane("passage_area_0").getLength()
+        
+        self.grid_total_length = 216.0 
+        
+        self.pre_merge_segment_len = self.grid_total_length - self.accel_segment_len
+        self.on_ramp_segment_len = self.pre_merge_segment_len - self.passage_segment_len
+        self.main_road_segment_len = self.pre_merge_segment_len
+        self.grid_rows = int(self.grid_total_length / self.cell_length_m)
+        
+        
+
+        self.internal_to_destination_map = {}
+        try:
+            for node in self.net.getNodes():
+                for conn in node.getConnections():
+                    internal_lane_id = conn._via
+                    to_lane_obj = conn._toLane
+                    if internal_lane_id and to_lane_obj:
+                        self.internal_to_destination_map[internal_lane_id] = to_lane_obj.getID()
+        except AttributeError:
+            print("--- FATAL ERROR: Could not read connections from network file. ---")
+            sys.exit(1)
+        
+        print("--- Internal Lane Map ---")
+        for k, v in self.internal_to_destination_map.items():
+            print(f"  '{k}' -> '{v}'")
+        print("-------------------------\n")
+
+
+    def _create_grid_observation(self):
+        #  Initialize the grid with 5 columns ---
+        grid = np.zeros((self.grid_rows, self.grid_cols, self.grid_channels), dtype=np.float32)
+        try:
+            all_veh_data = traci.vehicle.getSubscriptionResults(None)
+        except traci.TraCIException:
+            return grid
+
+        v_type_con = self.args.get("v_type_con", "con")
+        freeflow_speed = self.FREEFLOW_SPEED_MPS if self.FREEFLOW_SPEED_MPS > 0 else 35.0
+        
+        # This is a static map for our new column logic. It's clear and cannot be misinterpreted.
+        column_map = {
+            'main_road_2': 0, 'acceleration_area_3': 0,
+            'main_road_1': 1, 'acceleration_area_2': 1,
+            'main_road_0': 2, 'acceleration_area_1': 2,
+            'acceleration_area_0': 3,
+            'on_ramp_0': 4,
+            'passage_area_0': 4
+        }
+
+        for veh_id, data in all_veh_data.items():
+            if data.get(tc.VAR_TYPE) != v_type_con:
+                continue
+
+            original_lane_id = data.get(tc.VAR_LANE_ID)
+            lane_pos = data.get(tc.VAR_LANEPOSITION)
+            
+            lane_id = self.internal_to_destination_map.get(original_lane_id, original_lane_id)
+            if original_lane_id.startswith(':'):
+                lane_pos = 0.0
+
+            # --- Get column index from our new, clear map ---
+            col_idx = column_map.get(lane_id)
+            if col_idx is None:
+                continue
+                
+            # This is the original, correct positioning logic ---
+            # --- It correctly handles using only a slice of a SUMO lane ---
+            lane_len = self.net.getLane(lane_id).getLength()
+            dist_from_grid_start = -1
+
+            if "on_ramp" in lane_id:
+                start_of_segment = lane_len - self.on_ramp_segment_len
+                if lane_pos >= start_of_segment:
+                    dist_from_grid_start = lane_pos - start_of_segment
+            elif "passage_area" in lane_id:
+                dist_from_grid_start = self.on_ramp_segment_len + lane_pos
+            elif "main_road" in lane_id:
+                start_of_segment = lane_len - self.main_road_segment_len
+                if lane_pos >= start_of_segment:
+                    dist_from_grid_start = lane_pos - start_of_segment
+            elif "acceleration_area" in lane_id:
+                if lane_pos < self.accel_segment_len:
+                    if lane_id == 'acceleration_area_0':
+                         preceding_path_len = self.on_ramp_segment_len + self.passage_segment_len
+                    else:
+                         preceding_path_len = self.main_road_segment_len
+                    dist_from_grid_start = preceding_path_len + lane_pos
+            # --- END OF RESTORED LOGIC ---
+
+            if dist_from_grid_start < 0:
+                continue
+
+            dist_from_grid_end = self.grid_total_length - dist_from_grid_start
+            row_idx = int(dist_from_grid_end / self.cell_length_m)
+            row_idx = min(row_idx, self.grid_rows - 1)
+
+            if 0 <= row_idx < self.grid_rows:
+                speed = data.get(tc.VAR_SPEED, 0)
+                norm_speed = self.clip(0.0, 1.0, speed / freeflow_speed)
+                if grid[row_idx, col_idx, 1] == 0:
+                    grid[row_idx, col_idx, 0] = norm_speed
+                    grid[row_idx, col_idx, 1] = 1.0
+        return grid
+    
+ 
+        
+    def _subscribe_to_vehicles(self):
+        for veh_id in traci.simulation.getDepartedIDList():
+            traci.vehicle.subscribe(veh_id, [
+                tc.VAR_LANE_ID, tc.VAR_LANEPOSITION, tc.VAR_SPEED, tc.VAR_TYPE
+            ])
+    
     # --- Simulation Control Wrappers ---
     def start(self):
         try:
@@ -169,11 +306,17 @@ class SumoEnv:
         self.stop()
         self.ep_count += 1 # Increment episode count on reset
         
-        # --- ADD THIS LINE ---
+        
         # Generate a new route file for the new episode before starting SUMO
-        self._generate_route_file()
+        if self.generate_rou == True:
+            self._generate_route_file()
         
         self.start()
+        # Subscribe to vehicle data for efficient grid creation
+        try:
+            traci.vehicle.subscribe("", [tc.VAR_TYPE, tc.VAR_LANE_ID, tc.VAR_LANEPOSITION, tc.VAR_SPEED])
+        except traci.TraCIException:
+            print(f"Warning: SumoEnv - Could not subscribe to vehicle data.")
 
     def simulation_step(self):
         try:

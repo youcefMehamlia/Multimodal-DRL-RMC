@@ -6,6 +6,9 @@ from .custom_env.utils import SUMO_PARAMS # Or just from .custom_env import SUMO
 
 import torch.nn as nn
 import torch.optim as optim
+from torch import no_grad, as_tensor
+
+
 # from torch import no_grad, as_tensor # Only needed if you were calculating n_flatten for CNN
 
 # CONFIG will be used for naming save/log directories, e.g., "1ramp_1x3"
@@ -37,8 +40,8 @@ HYPER_PARAMS = {
     'target_update_freq': 30000,                  # Target network update frequency (in agent steps, e.g., every 500*40 = 20k sim seconds)
     'target_soft_update': True,                 # Target network soft update
     'target_soft_update_tau': 1e-3,             # Target network soft update tau rate
-    'save_freq': 10000, # Save frequency (e.g., every 10 episodes, in agent steps)
-    'log_freq': 4500,  # Log frequency (e.g., twice per episode, in agent steps)
+    'save_freq': 10000, # Save frequency 
+    'log_freq': 4500,  # Log frequency 
     'save_dir': './save/' + CONFIG + "/",       # Save directory
     'log_dir': './logs/train/' + CONFIG + "/",  # Log directory
     'load': True,                               # Load model if exists
@@ -54,53 +57,137 @@ HYPER_PARAMS = {
 ########################################################################################################################
 
 
-# """CHANGE NETWORK CONFIG HERE""" #####################################################################################
-def network_config(input_dim_space): # input_dim_space is the gym.spaces.Box object
-    # """CHANGE NETWORK HERE""" ########################################################################################
-    # This function defines an MLP for the 8-feature state vector.
-    
-    # Get the number of features from the input_dim_space (e.g., Box(shape=(8,)))
-    # RLController.observation_space_n should be 8
-    # CustomEnvWrapper creates observation_space = spaces.Box(..., shape=(observation_space_n,), ...)
-    # So, input_dim_space.shape[0] will be 8.
-    num_input_features = input_dim_space.shape[0]
-    
-    # Define hidden layer dimensions for the MLP
-    # These are examples, tuning these is part of hyperparameter optimization
-    fc_dims = (256, 128) # Two hidden layers with 256 and 128 units respectively
+# --- NETWORK CONFIGURATION FUNCTION ---
+# Place this custom class definition at the top of dqn_config.py,
+# right after the imports.
 
-    # Activation function
-    activation = nn.ReLU() # ReLU is common, ELU or LeakyReLU are alternatives
+import torch as T # Make sure T is imported as torch
 
-    # Construct the network
-    net = nn.Sequential(
-        nn.Linear(num_input_features, fc_dims[0]),
-        activation,
-        nn.Linear(fc_dims[0], fc_dims[1]),
-        activation
-        # Add more layers if needed for more complex state-action mappings
-        # nn.Linear(fc_dims[1], fc_dims[2]),
-        # activation,
+class TwoStreamHybridNetwork(nn.Module):
+    def __init__(self, macro_vec_len, micro_shape_chw, cnn_params, dense_params, activation_fn):
+        """
+        Initializes the two-stream network.
+        Args:
+            macro_vec_len (int): The length of the macro state vector (e.g., 14).
+            micro_shape_chw (tuple): The shape of the micro grid in (Channels, Height, Width) format (e.g., (2, 27, 5)).
+            cnn_params (list of tuples): Parameters for the CNN layers.
+            dense_params (list of tuples): Parameters for the final dense layers.
+            activation_fn: The activation function to use (e.g., nn.ReLU()).
+        """
+        super(TwoStreamHybridNetwork, self).__init__()
+
+        self.macro_len = macro_vec_len
+        self.micro_shape = micro_shape_chw
+        self.micro_flat_len = micro_shape_chw[0] * micro_shape_chw[1] * micro_shape_chw[2]
+
+        # --- Define the Micro (CNN) Stream ---
+        cnn_layers = []
+        in_channels = self.micro_shape[0] # Should be 2
+        for filters, kernel, stride in cnn_params:
+            cnn_layers.append(
+                nn.Conv2d(in_channels, filters, kernel_size=kernel, stride=stride, padding='same')
+            )
+            cnn_layers.append(activation_fn)
+            in_channels = filters # Update for the next layer
+        cnn_layers.append(nn.Flatten())
+        
+        self.cnn_stream = nn.Sequential(*cnn_layers)
+
+        # --- Calculate the size of the concatenated feature vector ---
+        # To do this, we need to pass a dummy tensor through the CNN stream
+        with T.no_grad():
+            dummy_micro_input = T.zeros(1, *self.micro_shape) # e.g., (1, 2, 27, 5)
+            cnn_output_size = self.cnn_stream(dummy_micro_input).shape[1]
+        
+        concatenated_size = cnn_output_size + self.macro_len
+
+        # --- Define the Final (Dense) Stream ---
+        dense_layers = []
+        in_features = concatenated_size
+        for out_features in dense_params:
+            dense_layers.append(nn.Linear(in_features, out_features))
+            dense_layers.append(activation_fn)
+            in_features = out_features
+
+        self.dense_stream = nn.Sequential(*dense_layers)
+        
+        # This attribute is needed by your Network wrapper class
+        self.fc_out_dim = dense_params[-1] if dense_params else in_features
+
+
+    def forward(self, x):
+        """
+        The forward pass that unpacks the flat vector and processes it.
+        Args:
+            x (Tensor): The flattened state vector of shape (batch_size, 284).
+        """
+        # --- 1. Unpack the State ---
+        macro_input = x[:, :self.macro_len]
+        micro_flat_input = x[:, self.macro_len:]
+        
+        # Reshape the micro part into a channels-first image for the CNN
+        micro_unpacked = micro_flat_input.view(-1, *self.micro_shape)
+
+        # --- 2. Process the Micro Stream ---
+        processed_micro = self.cnn_stream(micro_unpacked)
+
+        # --- 3. Concatenate ---
+        # Combine the processed micro features with the RAW macro features
+        combined_features = T.cat([processed_micro, macro_input], dim=1)
+
+        # --- 4. Final Processing ---
+        output = self.dense_stream(combined_features)
+        
+        return output
+    
+    
+# In dqn_config.py, replace the ENTIRE network_config function with this.
+
+def network_config(input_dim):
+    # input_dim is the shape of the observation space from the gym wrapper,
+    # which will be a tuple like (284,) for the flat vector.
+
+    # """DEFINE YOUR ARCHITECTURE PARAMETERS HERE""" ##################################################################
+    
+    # --- Part 1: Define the dimensions ---
+    # These must match the state creation in rl_controller.py
+    MACRO_VECTOR_LENGTH = 14
+    # IMPORTANT: PyTorch CNNs expect Channels-First: (Channels, Height, Width)
+    MICRO_GRID_SHAPE_CHW = (SUMO_PARAMS["grid_channels"], SUMO_PARAMS["grid_rows"], SUMO_PARAMS["grid_cols"]) # (2, 27, 5)
+
+    # --- Part 2: Define the network layers ---
+    
+    # Parameters for the CNN stream: (filters, kernel_size, stride)
+    # Using the professionally recommended architecture
+    CNN_PARAMS = [
+        (32, (3, 3), (1, 1)),
+        (64, (3, 3), (2, 1)), # Asymmetric stride
+        (64, (3, 3), (2, 2))
+    ]
+
+    # Parameters for the final dense layers (after concatenation)
+    DENSE_PARAMS = [512,256] # A single hidden layer of 512 units. Add more if needed, e.g., [512, 256]
+
+    # --- Part 3: Choose Activation, Optimizer, Loss ---
+    
+    ACTIVATION = nn.ELU() # ReLU is standard, but ELU is fine too.
+    OPTIMIZER = optim.Adam
+    LOSS_FUNCTION = nn.SmoothL1Loss
+    
+    ####################################################################################################################
+
+    # --- Instantiate the custom network ---
+    net = TwoStreamHybridNetwork(
+        macro_vec_len=MACRO_VECTOR_LENGTH,
+        micro_shape_chw=MICRO_GRID_SHAPE_CHW,
+        cnn_params=CNN_PARAMS,
+        dense_params=DENSE_PARAMS,
+        activation_fn=ACTIVATION
     )
-    ####################################################################################################################
 
-    # """CHANGE FC DUELING LAYER OUTPUT DIM HERE""" ####################################################################
-    # This is the number of output features from the common body of the network,
-    # before it splits into Value and Advantage streams (for DuelingDQN)
-    # or before the final Q-value layer (for standard DQN).
-    fc_out_dim = fc_dims[-1] # Output dimension of the last hidden layer (e.g., 128)
-    ####################################################################################################################
+    # The fc_out_dim is now an attribute of our custom network
+    fc_out_dim = net.fc_out_dim
 
-    # """CHANGE OPTIMIZER HERE""" ######################################################################################
-    optim_func = optim.Adam # Adam is a good default
-    # optim_func = optim.RMSprop
-    ####################################################################################################################
-
-    # """CHANGE LOSS HERE""" ###########################################################################################
-    loss_func = nn.SmoothL1Loss # Huber loss, robust to outliers, common for DQN
-    # loss_func = nn.MSELoss
-    ####################################################################################################################
-
-    return net, fc_out_dim, optim_func, loss_func
+    return net, fc_out_dim, OPTIMIZER, LOSS_FUNCTION
 
 ########################################################################################################################

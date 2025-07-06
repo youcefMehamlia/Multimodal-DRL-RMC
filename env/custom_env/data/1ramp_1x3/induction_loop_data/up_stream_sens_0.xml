@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-07-02 16:18:49 by Eclipse SUMO sumo Version v1_21_0+1816-1a1b44bb35d
-<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+<!-- generated on 2025-07-03 12:07:59 by Eclipse SUMO GUI Version 1.18.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
         <net-file value="env/custom_env/data/1ramp_1x3/1ramp_1x3.net.xml"/>
@@ -35,46 +35,18 @@
     </report>
 
     <traci_server>
-        <remote-port value="40511"/>
+        <remote-port value="33089"/>
     </traci_server>
+
+    <random_number>
+        <seed value="42"/>
+    </random_number>
 
     <gui_only>
         <gui-settings-file value="env/custom_env/data/1ramp_1x3/gui-settings.cfg"/>
+        <quit-on-end value="false"/>
+        <start value="true"/>
+        <delay value="0"/>
     </gui_only>
 
-</sumoConfiguration>
--->
-
-<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e1_file.xsd">
-    <interval begin="0.00" end="40.00" id="up_stream_sens_0" nVehContrib="1" flow="90.00" occupancy="0.52" speed="24.08" harmonicMeanSpeed="24.08" length="5.00" nVehEntered="1"/>
-    <interval begin="40.00" end="80.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="8.99" speed="17.44" harmonicMeanSpeed="16.70" length="5.00" nVehEntered="13"/>
-    <interval begin="80.00" end="120.00" id="up_stream_sens_0" nVehContrib="9" flow="810.00" occupancy="5.70" speed="19.78" harmonicMeanSpeed="19.72" length="5.00" nVehEntered="9"/>
-    <interval begin="120.00" end="160.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="7.00" speed="21.49" harmonicMeanSpeed="21.44" length="5.00" nVehEntered="12"/>
-    <interval begin="160.00" end="200.00" id="up_stream_sens_0" nVehContrib="8" flow="720.00" occupancy="5.11" speed="19.72" harmonicMeanSpeed="19.57" length="5.00" nVehEntered="8"/>
-    <interval begin="200.00" end="240.00" id="up_stream_sens_0" nVehContrib="11" flow="990.00" occupancy="7.42" speed="18.69" harmonicMeanSpeed="18.53" length="5.00" nVehEntered="11"/>
-    <interval begin="240.00" end="280.00" id="up_stream_sens_0" nVehContrib="7" flow="630.00" occupancy="5.32" speed="16.56" harmonicMeanSpeed="16.45" length="5.00" nVehEntered="7"/>
-    <interval begin="280.00" end="320.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="9.28" speed="16.21" harmonicMeanSpeed="16.16" length="5.00" nVehEntered="12"/>
-    <interval begin="320.00" end="360.00" id="up_stream_sens_0" nVehContrib="14" flow="1260.00" occupancy="9.60" speed="18.44" harmonicMeanSpeed="18.22" length="5.00" nVehEntered="14"/>
-    <interval begin="360.00" end="400.00" id="up_stream_sens_0" nVehContrib="8" flow="720.00" occupancy="5.54" speed="18.16" harmonicMeanSpeed="18.06" length="5.00" nVehEntered="8"/>
-    <interval begin="400.00" end="440.00" id="up_stream_sens_0" nVehContrib="13" flow="1170.00" occupancy="9.05" speed="18.12" harmonicMeanSpeed="17.96" length="5.00" nVehEntered="13"/>
-    <interval begin="440.00" end="480.00" id="up_stream_sens_0" nVehContrib="11" flow="990.00" occupancy="7.16" speed="19.26" harmonicMeanSpeed="19.19" length="5.00" nVehEntered="11"/>
-    <interval begin="480.00" end="520.00" id="up_stream_sens_0" nVehContrib="10" flow="900.00" occupancy="6.89" speed="18.22" harmonicMeanSpeed="18.15" length="5.00" nVehEntered="10"/>
-    <interval begin="520.00" end="560.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="8.89" speed="16.95" harmonicMeanSpeed="16.87" length="5.00" nVehEntered="12"/>
-    <interval begin="560.00" end="600.00" id="up_stream_sens_0" nVehContrib="14" flow="1260.00" occupancy="10.25" speed="18.22" harmonicMeanSpeed="18.06" length="5.00" nVehEntered="15"/>
-    <interval begin="600.00" end="640.00" id="up_stream_sens_0" nVehContrib="10" flow="900.00" occupancy="7.25" speed="16.47" harmonicMeanSpeed="16.01" length="5.00" nVehEntered="9"/>
-    <interval begin="640.00" end="680.00" id="up_stream_sens_0" nVehContrib="13" flow="1170.00" occupancy="9.18" speed="17.88" harmonicMeanSpeed="17.69" length="5.00" nVehEntered="13"/>
-    <interval begin="680.00" end="720.00" id="up_stream_sens_0" nVehContrib="8" flow="720.00" occupancy="5.17" speed="19.48" harmonicMeanSpeed="19.34" length="5.00" nVehEntered="8"/>
-    <interval begin="720.00" end="760.00" id="up_stream_sens_0" nVehContrib="13" flow="1170.00" occupancy="9.54" speed="17.19" harmonicMeanSpeed="17.04" length="5.00" nVehEntered="13"/>
-    <interval begin="760.00" end="800.00" id="up_stream_sens_0" nVehContrib="11" flow="990.00" occupancy="9.69" speed="17.33" harmonicMeanSpeed="14.18" length="5.00" nVehEntered="11"/>
-    <interval begin="800.00" end="840.00" id="up_stream_sens_0" nVehContrib="6" flow="540.00" occupancy="4.04" speed="18.65" harmonicMeanSpeed="18.56" length="5.00" nVehEntered="6"/>
-    <interval begin="840.00" end="880.00" id="up_stream_sens_0" nVehContrib="10" flow="900.00" occupancy="6.43" speed="19.51" harmonicMeanSpeed="19.43" length="5.00" nVehEntered="10"/>
-    <interval begin="880.00" end="920.00" id="up_stream_sens_0" nVehContrib="11" flow="990.00" occupancy="7.33" speed="18.84" harmonicMeanSpeed="18.77" length="5.00" nVehEntered="11"/>
-    <interval begin="920.00" end="960.00" id="up_stream_sens_0" nVehContrib="13" flow="1170.00" occupancy="9.49" speed="17.39" harmonicMeanSpeed="17.13" length="5.00" nVehEntered="13"/>
-    <interval begin="960.00" end="1000.00" id="up_stream_sens_0" nVehContrib="9" flow="810.00" occupancy="6.02" speed="18.92" harmonicMeanSpeed="18.70" length="5.00" nVehEntered="9"/>
-    <interval begin="1000.00" end="1040.00" id="up_stream_sens_0" nVehContrib="11" flow="990.00" occupancy="6.87" speed="20.07" harmonicMeanSpeed="20.02" length="5.00" nVehEntered="11"/>
-    <interval begin="1040.00" end="1080.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="7.48" speed="20.10" harmonicMeanSpeed="20.05" length="5.00" nVehEntered="12"/>
-    <interval begin="1080.00" end="1120.00" id="up_stream_sens_0" nVehContrib="9" flow="810.00" occupancy="6.59" speed="17.36" harmonicMeanSpeed="17.07" length="5.00" nVehEntered="9"/>
-    <interval begin="1120.00" end="1160.00" id="up_stream_sens_0" nVehContrib="12" flow="1080.00" occupancy="8.21" speed="18.43" harmonicMeanSpeed="18.28" length="5.00" nVehEntered="12"/>
-    <interval begin="1160.00" end="1200.00" id="up_stream_sens_0" nVehContrib="13" flow="1170.00" occupancy="8.59" speed="19.09" harmonicMeanSpeed="18.93" length="5.00" nVehEntered="13"/>
-    <interval begin="1200.00" end="1240.00" id="up_stream_sens_0" nVehContrib="10" flow="900.00" occupancy="6.64" speed="18.88" harmonicMeanSpeed="18.83" length="5.00" nVehEntered="10"/>
-</detector>
+</configuration>
