@@ -36,7 +36,7 @@ SUMO_PARAMS = {
     "veh_per_hour_on_ramp": [1400, 1500, 1600, 1700, 1800, 1900, 2000],
     "veh_per_hour_off_ramp": [100, 300, 500],
     
-    "generate_route_file": False,
+    "generate_route_file": True,
 
    
     # Biased towards higher flows as requested.
@@ -62,4 +62,7 @@ SUMO_PARAMS = {
     "grid_channels" : 2,
     "grid_rows" : 27, # Number of rows in the grid. (int(216/8))
     "vector_len" :14,
+    
+    "observation_shape_macro": (14,),
+    "observation_shape_micro": (2, 27, 5) # Channels-first for PyTorch
 }
