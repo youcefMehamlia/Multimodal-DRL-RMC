@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-07-03 12:07:59 by Eclipse SUMO GUI Version 1.18.0
+<!-- generated on 2025-07-07 11:46:06 by Eclipse SUMO sumo Version 1.18.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -35,7 +35,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="33089"/>
+        <remote-port value="43045"/>
     </traci_server>
 
     <random_number>
@@ -44,9 +44,29 @@
 
     <gui_only>
         <gui-settings-file value="env/custom_env/data/1ramp_1x3/gui-settings.cfg"/>
-        <quit-on-end value="false"/>
-        <start value="true"/>
-        <delay value="0"/>
     </gui_only>
 
 </configuration>
+-->
+
+<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e1_file.xsd">
+    <interval begin="0.00" end="40.00" id="merge_start_sens" nVehContrib="7" flow="630.00" occupancy="7.11" speed="14.92" harmonicMeanSpeed="14.85" length="5.00" nVehEntered="9"/>
+    <interval begin="40.00" end="80.00" id="merge_start_sens" nVehContrib="13" flow="1170.00" occupancy="11.83" speed="14.01" harmonicMeanSpeed="13.74" length="5.00" nVehEntered="13"/>
+    <interval begin="80.00" end="120.00" id="merge_start_sens" nVehContrib="8" flow="720.00" occupancy="7.61" speed="14.57" harmonicMeanSpeed="14.34" length="5.00" nVehEntered="9"/>
+    <interval begin="120.00" end="160.00" id="merge_start_sens" nVehContrib="7" flow="630.00" occupancy="6.72" speed="13.28" harmonicMeanSpeed="13.02" length="5.00" nVehEntered="7"/>
+    <interval begin="160.00" end="200.00" id="merge_start_sens" nVehContrib="4" flow="360.00" occupancy="3.31" speed="15.10" harmonicMeanSpeed="15.10" length="5.00" nVehEntered="4"/>
+    <interval begin="200.00" end="240.00" id="merge_start_sens" nVehContrib="12" flow="1080.00" occupancy="11.13" speed="13.75" harmonicMeanSpeed="13.47" length="5.00" nVehEntered="12"/>
+    <interval begin="240.00" end="280.00" id="merge_start_sens" nVehContrib="17" flow="1530.00" occupancy="22.67" speed="13.40" harmonicMeanSpeed="12.50" length="5.00" nVehEntered="18"/>
+    <interval begin="280.00" end="320.00" id="merge_start_sens" nVehContrib="11" flow="990.00" occupancy="47.27" speed="8.86" harmonicMeanSpeed="2.60" length="5.00" nVehEntered="10"/>
+    <interval begin="320.00" end="360.00" id="merge_start_sens" nVehContrib="14" flow="1260.00" occupancy="11.96" speed="14.70" harmonicMeanSpeed="14.63" length="5.00" nVehEntered="14"/>
+    <interval begin="360.00" end="400.00" id="merge_start_sens" nVehContrib="9" flow="810.00" occupancy="7.48" speed="15.14" harmonicMeanSpeed="15.04" length="5.00" nVehEntered="9"/>
+    <interval begin="400.00" end="440.00" id="merge_start_sens" nVehContrib="13" flow="1170.00" occupancy="13.04" speed="12.64" harmonicMeanSpeed="12.46" length="5.00" nVehEntered="13"/>
+    <interval begin="440.00" end="480.00" id="merge_start_sens" nVehContrib="10" flow="900.00" occupancy="8.13" speed="15.49" harmonicMeanSpeed="15.37" length="5.00" nVehEntered="10"/>
+    <interval begin="480.00" end="520.00" id="merge_start_sens" nVehContrib="12" flow="1080.00" occupancy="10.39" speed="14.54" harmonicMeanSpeed="14.44" length="5.00" nVehEntered="12"/>
+    <interval begin="520.00" end="560.00" id="merge_start_sens" nVehContrib="9" flow="810.00" occupancy="31.54" speed="12.73" harmonicMeanSpeed="11.19" length="5.00" nVehEntered="10"/>
+    <interval begin="560.00" end="600.00" id="merge_start_sens" nVehContrib="13" flow="1170.00" occupancy="33.98" speed="7.39" harmonicMeanSpeed="2.93" length="5.00" nVehEntered="12"/>
+    <interval begin="600.00" end="640.00" id="merge_start_sens" nVehContrib="7" flow="630.00" occupancy="5.88" speed="14.99" harmonicMeanSpeed="14.89" length="5.00" nVehEntered="7"/>
+    <interval begin="640.00" end="680.00" id="merge_start_sens" nVehContrib="7" flow="630.00" occupancy="6.16" speed="14.30" harmonicMeanSpeed="14.20" length="5.00" nVehEntered="7"/>
+    <interval begin="680.00" end="720.00" id="merge_start_sens" nVehContrib="3" flow="270.00" occupancy="2.34" speed="16.05" harmonicMeanSpeed="16.03" length="5.00" nVehEntered="3"/>
+    <interval begin="720.00" end="760.00" id="merge_start_sens" nVehContrib="3" flow="270.00" occupancy="2.59" speed="14.63" harmonicMeanSpeed="14.48" length="5.00" nVehEntered="3"/>
+</detector>

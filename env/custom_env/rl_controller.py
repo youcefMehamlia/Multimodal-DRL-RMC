@@ -250,6 +250,7 @@ class RLController(SumoEnv):
         self._collect_data_at_cycle_end()
 
         new_observation = self._get_current_observation()
+       
         reward = self._calculate_reward()
         is_done = self.is_simulation_end() or self.get_current_time() >= self.args["steps"]
         
@@ -319,6 +320,7 @@ class RLController(SumoEnv):
 
         # ---- Part 2: New Micro-State (Grid) ----
         grid_state = self._create_grid_observation()
+        
         flat_grid_state = grid_state.flatten()
 
         # ---- Part 3: Combine States ----

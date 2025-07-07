@@ -302,29 +302,28 @@ class SumoEnv:
             pass
         sys.stdout.flush()
 
+    # In SumoEnv.simulation_reset()
+
     def simulation_reset(self):
         self.stop()
-        self.ep_count += 1 # Increment episode count on reset
+        self.ep_count += 1 
         
-        
-        # Generate a new route file for the new episode before starting SUMO
         if self.generate_rou == True:
             self._generate_route_file()
         
         self.start()
-        # Subscribe to vehicle data for efficient grid creation
-        try:
-            traci.vehicle.subscribe("", [tc.VAR_TYPE, tc.VAR_LANE_ID, tc.VAR_LANEPOSITION, tc.VAR_SPEED])
-        except traci.TraCIException:
-            print(f"Warning: SumoEnv - Could not subscribe to vehicle data.")
+        
+    # Subscriptions will now be handled in simulation_step()
+    # In SumoEnv.simulation_step()
 
     def simulation_step(self):
         try:
             traci.simulationStep()
+            # After the step, check for new vehicles and subscribe to them
+            self._subscribe_to_vehicles()
         except traci.TraCIException as e:
             print(f"Error during simulation step: {e}. SUMO may have closed.")
-            # Decide how to handle this - maybe raise an exception to end episode
-            raise e # Or return a special status
+            raise e
 
     # --- Abstract DRL Methods (to be implemented by subclasses like RLController) ---
     def reset(self):

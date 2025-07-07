@@ -84,12 +84,12 @@ class TwoStreamHybridNetwork(nn.Module):
         cnn_layers = []
         in_channels = self.micro_shape[0] # Should be 2
         for filters, kernel, stride in cnn_params:
+            padding = (kernel[0] // 2, kernel[1] // 2)
             cnn_layers.append(
-                nn.Conv2d(in_channels, filters, kernel_size=kernel, stride=stride, padding='same')
+                nn.Conv2d(in_channels, filters, kernel_size=kernel, stride=stride, padding=padding)
             )
             cnn_layers.append(activation_fn)
-            in_channels = filters # Update for the next layer
-        cnn_layers.append(nn.Flatten())
+            in_channels = filters
         
         self.cnn_stream = nn.Sequential(*cnn_layers)
 

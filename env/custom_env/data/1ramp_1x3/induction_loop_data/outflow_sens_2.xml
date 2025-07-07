@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-07-03 12:07:59 by Eclipse SUMO GUI Version 1.18.0
+<!-- generated on 2025-07-07 11:46:06 by Eclipse SUMO sumo Version 1.18.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -35,7 +35,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="33089"/>
+        <remote-port value="43045"/>
     </traci_server>
 
     <random_number>
@@ -44,9 +44,29 @@
 
     <gui_only>
         <gui-settings-file value="env/custom_env/data/1ramp_1x3/gui-settings.cfg"/>
-        <quit-on-end value="false"/>
-        <start value="true"/>
-        <delay value="0"/>
     </gui_only>
 
 </configuration>
+-->
+
+<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e1_file.xsd">
+    <interval begin="0.00" end="40.00" id="outflow_sens_2" nVehContrib="2" flow="180.00" occupancy="1.04" speed="24.34" harmonicMeanSpeed="24.10" length="5.00" nVehEntered="2"/>
+    <interval begin="40.00" end="80.00" id="outflow_sens_2" nVehContrib="18" flow="1620.00" occupancy="10.75" speed="21.00" harmonicMeanSpeed="20.93" length="5.00" nVehEntered="18"/>
+    <interval begin="80.00" end="120.00" id="outflow_sens_2" nVehContrib="22" flow="1980.00" occupancy="13.17" speed="20.98" harmonicMeanSpeed="20.90" length="5.00" nVehEntered="23"/>
+    <interval begin="120.00" end="160.00" id="outflow_sens_2" nVehContrib="22" flow="1980.00" occupancy="12.92" speed="21.38" harmonicMeanSpeed="21.27" length="5.00" nVehEntered="21"/>
+    <interval begin="160.00" end="200.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.62" speed="21.15" harmonicMeanSpeed="21.11" length="5.00" nVehEntered="23"/>
+    <interval begin="200.00" end="240.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.59" speed="21.30" harmonicMeanSpeed="21.16" length="5.00" nVehEntered="23"/>
+    <interval begin="240.00" end="280.00" id="outflow_sens_2" nVehContrib="22" flow="1980.00" occupancy="13.00" speed="21.29" harmonicMeanSpeed="21.16" length="5.00" nVehEntered="22"/>
+    <interval begin="280.00" end="320.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.40" speed="21.53" harmonicMeanSpeed="21.46" length="5.00" nVehEntered="23"/>
+    <interval begin="320.00" end="360.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="14.22" speed="20.26" harmonicMeanSpeed="20.21" length="5.00" nVehEntered="23"/>
+    <interval begin="360.00" end="400.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="14.61" speed="19.77" harmonicMeanSpeed="19.68" length="5.00" nVehEntered="23"/>
+    <interval begin="400.00" end="440.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.29" speed="21.69" harmonicMeanSpeed="21.64" length="5.00" nVehEntered="23"/>
+    <interval begin="440.00" end="480.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="14.34" speed="20.08" harmonicMeanSpeed="20.05" length="5.00" nVehEntered="23"/>
+    <interval begin="480.00" end="520.00" id="outflow_sens_2" nVehContrib="22" flow="1980.00" occupancy="13.10" speed="21.08" harmonicMeanSpeed="20.99" length="5.00" nVehEntered="22"/>
+    <interval begin="520.00" end="560.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="14.08" speed="21.22" harmonicMeanSpeed="21.15" length="5.00" nVehEntered="24"/>
+    <interval begin="560.00" end="600.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.36" speed="20.95" harmonicMeanSpeed="20.86" length="5.00" nVehEntered="23"/>
+    <interval begin="600.00" end="640.00" id="outflow_sens_2" nVehContrib="22" flow="1980.00" occupancy="14.47" speed="19.63" harmonicMeanSpeed="19.55" length="5.00" nVehEntered="22"/>
+    <interval begin="640.00" end="680.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.89" speed="20.18" harmonicMeanSpeed="20.00" length="5.00" nVehEntered="22"/>
+    <interval begin="680.00" end="720.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="14.13" speed="20.44" harmonicMeanSpeed="20.35" length="5.00" nVehEntered="23"/>
+    <interval begin="720.00" end="760.00" id="outflow_sens_2" nVehContrib="23" flow="2070.00" occupancy="13.65" speed="21.11" harmonicMeanSpeed="21.06" length="5.00" nVehEntered="23"/>
+</detector>

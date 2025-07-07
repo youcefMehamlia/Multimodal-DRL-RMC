@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-07-03 12:07:59 by Eclipse SUMO GUI Version 1.18.0
+<!-- generated on 2025-07-07 11:46:06 by Eclipse SUMO sumo Version 1.18.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -35,7 +35,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="33089"/>
+        <remote-port value="43045"/>
     </traci_server>
 
     <random_number>
@@ -44,9 +44,29 @@
 
     <gui_only>
         <gui-settings-file value="env/custom_env/data/1ramp_1x3/gui-settings.cfg"/>
-        <quit-on-end value="false"/>
-        <start value="true"/>
-        <delay value="0"/>
     </gui_only>
 
 </configuration>
+-->
+
+<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e1_file.xsd">
+    <interval begin="0.00" end="40.00" id="queue_sens" nVehContrib="1" flow="90.00" occupancy="0.89" speed="14.04" harmonicMeanSpeed="14.04" length="5.00" nVehEntered="1"/>
+    <interval begin="40.00" end="80.00" id="queue_sens" nVehContrib="1" flow="90.00" occupancy="2.83" speed="4.42" harmonicMeanSpeed="4.42" length="5.00" nVehEntered="1"/>
+    <interval begin="80.00" end="120.00" id="queue_sens" nVehContrib="1" flow="90.00" occupancy="2.96" speed="4.23" harmonicMeanSpeed="4.23" length="5.00" nVehEntered="1"/>
+    <interval begin="120.00" end="160.00" id="queue_sens" nVehContrib="0" flow="0.00" occupancy="0.00" speed="-1.00" harmonicMeanSpeed="-1.00" length="-1.00" nVehEntered="0"/>
+    <interval begin="160.00" end="200.00" id="queue_sens" nVehContrib="4" flow="360.00" occupancy="11.38" speed="4.42" harmonicMeanSpeed="4.39" length="5.00" nVehEntered="4"/>
+    <interval begin="200.00" end="240.00" id="queue_sens" nVehContrib="2" flow="180.00" occupancy="5.10" speed="5.60" harmonicMeanSpeed="4.90" length="5.00" nVehEntered="2"/>
+    <interval begin="240.00" end="280.00" id="queue_sens" nVehContrib="2" flow="180.00" occupancy="3.75" speed="9.91" harmonicMeanSpeed="6.67" length="5.00" nVehEntered="2"/>
+    <interval begin="280.00" end="320.00" id="queue_sens" nVehContrib="4" flow="360.00" occupancy="7.70" speed="8.22" harmonicMeanSpeed="6.49" length="5.00" nVehEntered="4"/>
+    <interval begin="320.00" end="360.00" id="queue_sens" nVehContrib="0" flow="0.00" occupancy="0.00" speed="-1.00" harmonicMeanSpeed="-1.00" length="-1.00" nVehEntered="0"/>
+    <interval begin="360.00" end="400.00" id="queue_sens" nVehContrib="4" flow="360.00" occupancy="5.67" speed="10.38" harmonicMeanSpeed="8.82" length="5.00" nVehEntered="4"/>
+    <interval begin="400.00" end="440.00" id="queue_sens" nVehContrib="0" flow="0.00" occupancy="0.00" speed="-1.00" harmonicMeanSpeed="-1.00" length="-1.00" nVehEntered="0"/>
+    <interval begin="440.00" end="480.00" id="queue_sens" nVehContrib="2" flow="180.00" occupancy="6.83" speed="8.30" harmonicMeanSpeed="5.78" length="5.00" nVehEntered="3"/>
+    <interval begin="480.00" end="520.00" id="queue_sens" nVehContrib="3" flow="270.00" occupancy="5.00" speed="6.47" harmonicMeanSpeed="5.00" length="5.00" nVehEntered="2"/>
+    <interval begin="520.00" end="560.00" id="queue_sens" nVehContrib="3" flow="270.00" occupancy="4.95" speed="8.97" harmonicMeanSpeed="7.58" length="5.00" nVehEntered="3"/>
+    <interval begin="560.00" end="600.00" id="queue_sens" nVehContrib="4" flow="360.00" occupancy="12.18" speed="4.15" harmonicMeanSpeed="4.10" length="5.00" nVehEntered="4"/>
+    <interval begin="600.00" end="640.00" id="queue_sens" nVehContrib="3" flow="270.00" occupancy="8.82" speed="4.84" harmonicMeanSpeed="4.25" length="5.00" nVehEntered="3"/>
+    <interval begin="640.00" end="680.00" id="queue_sens" nVehContrib="3" flow="270.00" occupancy="3.27" speed="11.49" harmonicMeanSpeed="11.46" length="5.00" nVehEntered="3"/>
+    <interval begin="680.00" end="720.00" id="queue_sens" nVehContrib="3" flow="270.00" occupancy="12.52" speed="3.13" harmonicMeanSpeed="2.99" length="5.00" nVehEntered="3"/>
+    <interval begin="720.00" end="760.00" id="queue_sens" nVehContrib="2" flow="180.00" occupancy="8.44" speed="2.97" harmonicMeanSpeed="2.96" length="5.00" nVehEntered="2"/>
+</detector>
