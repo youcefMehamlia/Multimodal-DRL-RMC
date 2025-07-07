@@ -26,7 +26,7 @@ SUMO_PARAMS = {
     "delay": 0,   # The delay (in milliseconds) between simulation steps when running with a GUI.
     "gui": True,  # Whether to run SUMO with a graphical user interface (GUI).
     "log": False, # Whether to enable logging of simulation statistics.
-    "seed":True, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
+    "seed":False, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
     "seed_value": 42, # The seed value to use for the simulation if `seed` is True.
     "alinea_detector_period_sec": 40.0,
 
