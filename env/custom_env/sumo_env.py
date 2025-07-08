@@ -143,7 +143,7 @@ class SumoEnv:
             "--tripinfo-output", self.data_dir + "tripinfo.xml", # Ensure this dir exists
             "--time-to-teleport", str(self.args.get("time_to_teleport", self.args["steps"])), # Default to steps if not specified
             "--waiting-time-memory", str(self.args.get("waiting_time_memory", self.args["steps"])),
-            "--log", "log", #! added
+            # "--log", "log", #! added
             "--no-warnings", "true",  #! added
     
         ]

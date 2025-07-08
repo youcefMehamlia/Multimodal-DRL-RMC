@@ -259,11 +259,12 @@ class AlineaDsBaseline(BaselineMeta):
                     self.set_phase(self.ramp_meter_id, self.red_phase_index)
                     self.set_phase_duration(self.ramp_meter_id, self.current_red_time_sec_alinea)
 
+        # --- MODIFICATION START ---
+        # The timers are now incremented unconditionally after the simulation step.
         self.simulation_step()
         self.time_since_last_decision_sec += self.sim_step_length
-        if self.is_in_green_phase_segment or self.time_in_current_phase_segment_sec < self.current_red_time_sec_alinea : # Check if still in red phase segment after switch
-             self.time_in_current_phase_segment_sec += self.sim_step_length
-
+        self.time_in_current_phase_segment_sec += self.sim_step_length
+        # --- MODIFICATION END ---
 
         self._update_log_info() # Update info after each SUMO step
 
@@ -276,8 +277,8 @@ class AlineaDsBaseline(BaselineMeta):
         self._last_step_info["alinea_target_red_time_sec"] = self.current_red_time_sec_alinea
         self._last_step_info["alinea_is_in_green_segment"] = self.is_in_green_phase_segment
         self._last_step_info["alinea_time_in_current_segment_sec"] = self.time_in_current_phase_segment_sec
-        self._last_step_info["alinea_time_since_last_decision_sec"] = self.time_since_last_decision_sec
-        
+        self._last_step_info["alinea_time_since_last_decision_sec"] = self.time_since_last_decision_sec       
+     
         
 class PiAlineaDsBaseline(BaselineMeta):
     """

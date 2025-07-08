@@ -93,11 +93,12 @@ class TwoStreamHybridNetwork(nn.Module):
         
         self.cnn_stream = nn.Sequential(*cnn_layers)
 
-        # --- Calculate the size of the concatenated feature vector ---
-        # To do this, we need to pass a dummy tensor through the CNN stream
+        # --- Calculate the size of the concatenated feature vector (CORRECTED) ---
         with T.no_grad():
             dummy_micro_input = T.zeros(1, *self.micro_shape) # e.g., (1, 2, 27, 5)
-            cnn_output_size = self.cnn_stream(dummy_micro_input).shape[1]
+            # --- FIX: Flatten the CNN output to get the feature vector size ---
+            cnn_output_flat = self.cnn_stream(dummy_micro_input).flatten(start_dim=1)
+            cnn_output_size = cnn_output_flat.shape[1]
         
         concatenated_size = cnn_output_size + self.macro_len
 
@@ -111,10 +112,9 @@ class TwoStreamHybridNetwork(nn.Module):
 
         self.dense_stream = nn.Sequential(*dense_layers)
         
-        # This attribute is needed by your Network wrapper class
         self.fc_out_dim = dense_params[-1] if dense_params else in_features
 
-
+    # --- THIS IS THE ONLY FORWARD FUNCTION YOU SHOULD HAVE ---
     def forward(self, x):
         """
         The forward pass that unpacks the flat vector and processes it.
@@ -125,15 +125,17 @@ class TwoStreamHybridNetwork(nn.Module):
         macro_input = x[:, :self.macro_len]
         micro_flat_input = x[:, self.macro_len:]
         
-        # Reshape the micro part into a channels-first image for the CNN
         micro_unpacked = micro_flat_input.view(-1, *self.micro_shape)
 
         # --- 2. Process the Micro Stream ---
-        processed_micro = self.cnn_stream(micro_unpacked)
+        processed_micro_4d = self.cnn_stream(micro_unpacked)
+        
+        # --- FIX: Flatten the 4D CNN output to a 2D tensor before concatenation ---
+        processed_micro_2d = processed_micro_4d.flatten(start_dim=1)
 
         # --- 3. Concatenate ---
-        # Combine the processed micro features with the RAW macro features
-        combined_features = T.cat([processed_micro, macro_input], dim=1)
+        # Now we are concatenating a 2D tensor with another 2D tensor
+        combined_features = T.cat([processed_micro_2d, macro_input], dim=1)
 
         # --- 4. Final Processing ---
         output = self.dense_stream(combined_features)
