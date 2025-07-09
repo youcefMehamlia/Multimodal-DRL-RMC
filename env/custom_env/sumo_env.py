@@ -153,7 +153,7 @@ class SumoEnv:
             params += [
                 "--delay", str(self.args.get("delay", 0)),
                 "--start", "true",
-                "--quit-on-end", "false" # Keep SUMO open after simulation ends
+                "--quit-on-end", "true" # Keep SUMO open after simulation ends
             ]
             gui_settings_file = self.SUMO_ENV + "data/" + self.config + "/gui-settings.cfg"
             # Only add gui-settings-file if it exists, to avoid SUMO error

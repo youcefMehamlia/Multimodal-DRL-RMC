@@ -62,19 +62,28 @@ class Observe(View):
         self.obs, _, done, info = self.env.step(self.action)
         self.env.log_info_writer(info, done, *self.log)
 
-        if done:
-            self.setup()
 
+        #to fix additional episode at the end
+        if done:
             self.repeat = 0
             self.ep += 1
 
             print()
             print("Episode :", self.ep)
+            # You can still print the info from the episode that just finished
             [print(k, ":", info[k]) for k in info]
 
+            # Check if we should exit BEFORE resetting the environment
             if bool(self.max_episodes) and self.ep >= self.max_episodes:
+                # The environment (and SUMO) from the completed run is still open.
+                # We can now safely close it and exit the script.
+                self.env.close() # Gracefully close the TraCI connection
                 exit()
-
+            
+            # If we are NOT exiting, only then do we reset for the next episode.
+            self.setup()
+            
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="OBSERVE")
