@@ -8,13 +8,11 @@ from .utils import SUMO_PARAMS # Make sure SUMO_PARAMS includes 'v_max_speed'
 
 # Import standard Python libraries.
 import sys
+import os
 import json
 import random 
 from colorama import Fore
 
-# CODE TO ADD/MODIFY IN sumo_env.py
-
-# ... (other imports)
 
 # Import SUMO libraries.
 try:
@@ -113,7 +111,17 @@ class SumoEnv:
         self.rnd_params = rnd # Store rnd for potential use
         self.seed = self.args.get("seed", False) # Optional seed for reproducibility
         self.ep_count = 0
-
+        
+        
+        
+        self.main_flow_vph = 0
+        self.on_ramp_flow_vph = 0
+        self.off_ramp_flow_vph = 0
+        self.pen_rate = 0.0
+        
+        
+        
+        # self.log_file_path = log_file
         self.generate_rou = self.args.get("generate_route_file", False) # Whether to generate a new route file each time
         # Generate the first route file before starting SUMO
         if self.generate_rou == True: # If you want to generate a new route file each time
@@ -137,18 +145,30 @@ class SumoEnv:
 
     def set_params(self):
         sumocfg_path = self.data_dir + self.config + ".sumocfg"
+        sumo_seed = os.environ.get("SUMO_EVAL_SEED")
+        sumo_log_file = os.environ.get("SUMO_EVAL_LOG_FILE")
+         
+         
         params = [
-            "sumo" + ("-gui" if self.gui else ""),
+            "sumo-gui" if self.gui else "sumo",
             "-c", sumocfg_path,
-            "--tripinfo-output", self.data_dir + "tripinfo.xml", # Ensure this dir exists
-            "--time-to-teleport", str(self.args.get("time_to_teleport", self.args["steps"])), # Default to steps if not specified
-            "--waiting-time-memory", str(self.args.get("waiting_time_memory", self.args["steps"])),
-            # "--log", "log", #! added
-            "--no-warnings", "true",  #! added
-    
+            "--tripinfo-output", self.data_dir + "tripinfo.xml",
+            "--time-to-teleport", str(self.args.get("time_to_teleport", 300)),
+            "--waiting-time-memory", str(self.args.get("waiting_time_memory", 1000)),
+            "--no-warnings", "true",
         ]
-        if self.seed:
-            params += ["--seed", str(self.args.get("seed_value", 42))] # Default seed value if not specified
+        # if self.log_file_path:
+        #     params += ["--log-file", self.log_file_path]
+        if sumo_seed:
+            params += ["--seed", str(sumo_seed)]
+        elif self.seed:
+            params += ["--seed", str(self.args.get("seed_value", 42))]
+            
+        
+       
+        if sumo_log_file:
+            params += ["--log", sumo_log_file]       
+       
         if self.gui:
             params += [
                 "--delay", str(self.args.get("delay", 0)),
@@ -157,7 +177,7 @@ class SumoEnv:
             ]
             gui_settings_file = self.SUMO_ENV + "data/" + self.config + "/gui-settings.cfg"
             # Only add gui-settings-file if it exists, to avoid SUMO error
-            import os
+            
             if os.path.exists(gui_settings_file):
                  params.append("--gui-settings-file")
                  params.append(gui_settings_file)
@@ -301,6 +321,10 @@ class SumoEnv:
         except traci.TraCIException: # SUMO might have already closed
             pass
         sys.stdout.flush()
+        
+    def close(self):
+        """Gracefully closes the TraCI connection."""
+        self.stop()
 
     # In SumoEnv.simulation_reset()
 
@@ -499,6 +523,36 @@ class SumoEnv:
             return 0.0 # Or handle as error
 
 
+    def get_final_simulation_stats(self):
+        """
+        Retrieves final simulation statistics available through TraCI
+        before the simulation is closed.
+        """
+        try:
+            # This gets the total number of vehicles that started teleporting.
+            teleports = traci.simulation.getStartingTeleportNumber()
+            return {"total_teleported_vehicles": teleports}
+        except traci.TraCIException:
+            return {"total_teleported_vehicles": -1} # Indicate error
+
+    # ADD this new method to retrieve demand parameters for an episode
+    def get_demand_parameters(self):
+        """Returns the demand parameters used for the current episode."""
+        return {
+            "demand_main_vph": self.current_main_flow,
+            "demand_on_ramp_vph": self.current_on_ramp_flow,
+            "demand_off_ramp_vph": self.current_off_ramp_flow,
+            "demand_pen_rate": self.current_pen_rate,
+        }
+    def get_scenario_info(self):
+        """Returns the demand parameters used for the current episode."""
+        return {
+            "main_flow_vph": self.main_flow_vph,
+            "on_ramp_flow_vph": self.on_ramp_flow_vph,
+            "off_ramp_flow_vph": self.off_ramp_flow_vph,
+            "con_penetration_rate": self.pen_rate,
+        }
+        
     def _generate_route_file(self):
             """
             Generates a new .rou.xml file for the simulation with randomized
@@ -523,6 +577,11 @@ class SumoEnv:
             min_pen, max_pen = self.args["con_penetration_rate_range"]
             pen_rate = random.uniform(min_pen, max_pen)
 
+            self.main_flow_vph = main_flow
+            self.on_ramp_flow_vph = on_ramp_flow
+            self.off_ramp_flow_vph = off_ramp_flow
+            self.pen_rate = pen_rate
+            
             # Calculate the number of vehicles for each type (connected vs. default)
             main_con = int(main_flow * pen_rate)
             main_def = int(main_flow * (1 - pen_rate))
@@ -575,6 +634,7 @@ class SumoEnv:
         log_data = {
             "sim_time": self.get_current_time(),
             "episode": self.ep_count,
+            **self.get_scenario_info() 
             
             # The actual state and reward values will be added by RLController
             # when it prepares its info dict.

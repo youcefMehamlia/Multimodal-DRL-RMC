@@ -52,6 +52,12 @@ class Observe(View):
 
     def setup(self):
         self.obs = self.env.reset()
+        
+        
+        
+    def close(self):
+        """Closes the environment."""
+        self.env.close()
 
     def loop(self):
         if self.repeat % (HYPER_PARAMS['repeat'] or 1) == 0:

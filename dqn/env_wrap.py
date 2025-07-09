@@ -102,14 +102,27 @@ class CustomEnvWrapper(gym.Env):
             self.log_info_buffer.append(info)
 
             if done:
-                file_exists = os.path.isfile(log_path + ".csv")
+                # The log_path from evaluate.py already has the full name, no need to add .csv
+                file_exists = os.path.isfile(log_path)
 
-                with open(log_path + ".csv", 'a') as f:
-                    csv_writer = DictWriter(f, delimiter=',', lineterminator='\n', fieldnames=[k for k in info])
+                with open(log_path, 'a', newline='') as f: # Added newline='' for better csv handling
+                    # Make sure all keys are present in all info dicts, or handle missing keys
+                    fieldnames = sorted(list(info.keys()))
+                    csv_writer = DictWriter(f, delimiter=',', lineterminator='\n', fieldnames=fieldnames)
+                    
                     if not file_exists:
                         csv_writer.writeheader()
-                    for log_info in self.log_info_buffer:
-                        csv_writer.writerow(log_info)
-                    f.close()
-
+                    
+                    for log_info_row in self.log_info_buffer:
+                        # Ensure all rows have all keys, fill with None if missing
+                        row_to_write = {key: log_info_row.get(key) for key in fieldnames}
+                        csv_writer.writerow(row_to_write)
+                    
                 self.log_info_buffer = []
+                
+    def close(self):
+        """Calls the close method of the wrapped environment."""
+        # --- FIX IS HERE ---
+        # Call close() on self.custom_env, not self.env
+        if hasattr(self.custom_env, 'close'):
+            self.custom_env.close()

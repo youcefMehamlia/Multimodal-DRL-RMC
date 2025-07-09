@@ -25,6 +25,12 @@ class Play(View):
     def setup(self):
         _ = self.env.reset()
 
+    
+    def close(self):
+        """Closes the environment."""
+        self.env.close()
+        
+    
     def loop(self):
         action = self.get_play_action()
 

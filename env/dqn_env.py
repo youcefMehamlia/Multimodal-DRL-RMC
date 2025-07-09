@@ -67,7 +67,21 @@ class DqnEnv:
         # """CHANGE STEP HERE""" #######################################################################################
         self.sumo_env.step(action)
         ################################################################################################################
+    
+    # In dqn_env.py
 
+
+    def get_scenario_info(self):
+        """Passes the request to the underlying sumo_env."""
+        if hasattr(self.sumo_env, 'get_scenario_info'):
+            return self.sumo_env.get_scenario_info()
+        return {}
+
+    def close(self):
+        """Passes the close command to the underlying sumo_env."""
+        if hasattr(self.sumo_env, 'close'):
+            self.sumo_env.close()
+            
     def reset_render(self):
         # """CHANGE RESET RENDER HERE""" ###############################################################################
         pass
