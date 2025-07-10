@@ -24,7 +24,7 @@ SUMO_PARAMS = {
     "log_overall_metrics" : True, # Whether to log overall metrics for the simulation.
     "steps": 3600, # The number of simulation steps to run.
     "delay": 0,   # The delay (in milliseconds) between simulation steps when running with a GUI.
-    "gui": True,  # Whether to run SUMO with a graphical user interface (GUI).
+    "gui": False,  # Whether to run SUMO with a graphical user interface (GUI).
     "log": False, # Whether to enable logging of simulation statistics.
     "seed":False, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
     "seed_value": 42, # The seed value to use for the simulation if `seed` is True.

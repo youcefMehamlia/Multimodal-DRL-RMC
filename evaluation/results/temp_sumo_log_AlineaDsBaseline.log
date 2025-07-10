@@ -1,23 +1,25 @@
-***Starting server on port 36303 ***
+***Starting server on port 58997 ***
 Loading net-file from 'env/custom_env/data/1ramp_1x3/1ramp_1x3.net.xml' ... done (3ms).
-Loading additional-files from 'env/custom_env/data/1ramp_1x3/1ramp_1x3.add.xml' ... done (24ms).
+Loading additional-files from 'env/custom_env/data/1ramp_1x3/1ramp_1x3.add.xml' ... done (26ms).
 Loading done.
 Simulation started with time: 0.00.
-Simulation ended at time: 377.00
+Error: tcpip::Socket::recvAndCheck @ recv: peer shutdown
+Quitting (on error).
+Simulation ended at time: 341.00
 Performance: 
- Duration: 5.50s
- TraCI-Duration: 3.84s
- Real time factor: 68.5455
- UPS: 8072.909091
+ Duration: 5.35s
+ TraCI-Duration: 3.74s
+ Real time factor: 63.7741
+ UPS: 7426.407331
 Vehicles: 
- Inserted: 696 (Loaded: 900)
- Running: 158
- Waiting: 204
-Statistics (avg of 538):
- RouteLength: 1030.14
- Speed: 17.20
- Duration: 65.36
- WaitingTime: 3.74
- TimeLoss: 23.89
- DepartDelay: 29.23
+ Inserted: 628 (Loaded: 663)
+ Running: 165
+ Waiting: 35
+Statistics (avg of 463):
+ RouteLength: 1037.32
+ Speed: 16.22
+ Duration: 66.85
+ WaitingTime: 1.76
+ TimeLoss: 25.34
+ DepartDelay: 7.06
 
