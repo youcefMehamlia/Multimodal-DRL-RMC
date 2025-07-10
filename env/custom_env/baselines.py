@@ -22,13 +22,12 @@ class BaselineMeta(SumoEnv):
             self._setup_tl_program()
 
     def _setup_tl_program(self):
-        """Creates and sets a simple G/r program. Must be called after every `traci.start()`."""
         if not self.ramp_meter_id: return
         try:
             program_id = "external_control_program"
             phases = [
-                traci.trafficlight.Phase(duration=3600, state="G"),  # Phase 0: Green
-                traci.trafficlight.Phase(duration=3600, state="r")   # Phase 1: Red
+                traci.trafficlight.Phase(duration=3600, state="G", name="Green"),
+                traci.trafficlight.Phase(duration=3600, state="r", name="Red")
             ]
             logic = traci.trafficlight.Logic(programID=program_id, type=0, currentPhaseIndex=0, phases=phases)
             traci.trafficlight.setCompleteRedYellowGreenDefinition(self.ramp_meter_id, logic)
@@ -39,11 +38,12 @@ class BaselineMeta(SumoEnv):
             print(f"[ERROR] Failed to set up TL program: {e}")
 
     def simulation_reset(self):
-        """Overrides SumoEnv.simulation_reset to ensure TL program is set up after traci restarts."""
         super().simulation_reset()
         self._setup_tl_program()
 
-    def reset(self): raise NotImplementedError
+    def reset(self):
+        raise NotImplementedError("This method must be implemented by subclasses.")
+
     def step(self, action): raise NotImplementedError
     def obs(self): return []
     def rew(self): return 0
@@ -97,8 +97,10 @@ class AlineaDsBaseline(BaselineMeta):
         self.time_in_cycle_sec = 0.0; self.active_green_time_sec = 0.0
         self.downstream_detector_ids = []; self.current_metering_rate_vph = 0; self.measured_downstream_occ_for_log = 0.0
 
+    # --- FIX: ADD THE RESET METHOD ---
     def reset(self):
-        self.simulation_reset()
+        """Resets the environment for a new episode."""
+        self.simulation_reset()  # This calls the parent's method, which sets up the TL
         self.downstream_detector_ids = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
         self.current_metering_rate_vph = (self.MAX_METERING_RATE_VPH + self.MIN_METERING_RATE_VPH) / 2
         self.time_in_cycle_sec = self.CYCLE_LENGTH_SEC
@@ -133,7 +135,6 @@ class AlineaDsBaseline(BaselineMeta):
             if self.get_phase(self.ramp_meter_id) != self.green_phase_index:
                 self.set_phase(self.ramp_meter_id, self.green_phase_index)
         else:
-            # --- THIS IS THE CORRECTED LINE ---
             if self.get_phase(self.ramp_meter_id) != self.red_phase_index:
                 self.set_phase(self.ramp_meter_id, self.red_phase_index)
         
@@ -156,8 +157,10 @@ class PiAlineaDsBaseline(BaselineMeta):
         self.time_in_cycle_sec = 0.0; self.active_green_time_sec = 0.0; self.integral_term = 0.0
         self.downstream_detector_ids = []; self.current_metering_rate_vph = 0; self.measured_downstream_occ_for_log = 0.0
 
+    # --- FIX: ADD THE RESET METHOD ---
     def reset(self):
-        self.simulation_reset()
+        """Resets the environment for a new episode."""
+        self.simulation_reset() # This calls the parent's method, which sets up the TL
         self.downstream_detector_ids = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
         self.current_metering_rate_vph = (self.MAX_METERING_RATE_VPH + self.MIN_METERING_RATE_VPH) / 2
         self.integral_term = 0.0; self.time_in_cycle_sec = self.CYCLE_LENGTH_SEC
@@ -195,7 +198,6 @@ class PiAlineaDsBaseline(BaselineMeta):
             if self.get_phase(self.ramp_meter_id) != self.green_phase_index:
                 self.set_phase(self.ramp_meter_id, self.green_phase_index)
         else:
-            # --- THIS IS THE CORRECTED LINE ---
             if self.get_phase(self.ramp_meter_id) != self.red_phase_index:
                 self.set_phase(self.ramp_meter_id, self.red_phase_index)
         
