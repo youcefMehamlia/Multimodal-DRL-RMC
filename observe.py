@@ -65,7 +65,9 @@ class Observe(View):
 
         self.repeat += 1
 
-        self.obs, _, done, info = self.env.step(self.action)
+        self.obs, _, terminated, truncated, info = self.env.step(self.action)
+        done = terminated or truncated
+
         self.env.log_info_writer(info, done, *self.log)
 
 

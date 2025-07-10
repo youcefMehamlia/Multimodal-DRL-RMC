@@ -9,7 +9,7 @@ ALGO4="PiAlineaDsBaseline"
 
 
 
-python3 play.py -player $ALGO1 -max_e 1 -log True -log_s 40
+python3 play.py -player $ALGO3 -max_e 1 -log True -log_s 40
 
 }
 

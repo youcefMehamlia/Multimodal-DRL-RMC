@@ -145,6 +145,7 @@ class SumoEnv:
 
     def set_params(self):
         sumocfg_path = self.data_dir + self.config + ".sumocfg"
+        emission_xml_path = os.path.join(os.path.dirname(self.data_dir), "emissions.xml")
         sumo_seed = os.environ.get("SUMO_EVAL_SEED")
         sumo_log_file = os.environ.get("SUMO_EVAL_LOG_FILE")
          
@@ -153,6 +154,8 @@ class SumoEnv:
             "sumo-gui" if self.gui else "sumo",
             "-c", sumocfg_path,
             "--tripinfo-output", self.data_dir + "tripinfo.xml",
+            
+            "--device.emissions.probability", "1.0",
             "--time-to-teleport", str(self.args.get("time_to_teleport", 300)),
             "--waiting-time-memory", str(self.args.get("waiting_time_memory", 1000)),
             "--no-warnings", "true",

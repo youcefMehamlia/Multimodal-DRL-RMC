@@ -1,0 +1,23 @@
+***Starting server on port 36303 ***
+Loading net-file from 'env/custom_env/data/1ramp_1x3/1ramp_1x3.net.xml' ... done (3ms).
+Loading additional-files from 'env/custom_env/data/1ramp_1x3/1ramp_1x3.add.xml' ... done (24ms).
+Loading done.
+Simulation started with time: 0.00.
+Simulation ended at time: 377.00
+Performance: 
+ Duration: 5.50s
+ TraCI-Duration: 3.84s
+ Real time factor: 68.5455
+ UPS: 8072.909091
+Vehicles: 
+ Inserted: 696 (Loaded: 900)
+ Running: 158
+ Waiting: 204
+Statistics (avg of 538):
+ RouteLength: 1030.14
+ Speed: 17.20
+ Duration: 65.36
+ WaitingTime: 3.74
+ TimeLoss: 23.89
+ DepartDelay: 29.23
+

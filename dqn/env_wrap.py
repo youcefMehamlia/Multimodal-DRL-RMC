@@ -57,23 +57,39 @@ class CustomEnvWrapper(gym.Env):
             "l": self.steps,
             "r": self.total_reward
         }
-
+        # When not training, we get more detailed info from the underlying env
         if not self.mode["train"]:
-            info.update(self.custom_env.info())
-
+            # Ensure custom_env.info() returns a dictionary
+            detailed_info = self.custom_env.info()
+            if detailed_info:
+                info.update(detailed_info)
         return info
 
-    def reset(self):
+    # --- THIS IS THE METHOD TO CHANGE ---
+    def reset(self, *, seed=None, options=None):
+        # The new gymnasium API passes seed and options. We should accept them.
+        super().reset(seed=seed) # This handles seeding in the parent class
+
         self.steps = 0
         self.total_reward = 0.
 
+        # This will call DqnEnv.reset() -> RLController.reset() / Baseline.reset()
         self.custom_env.reset()
 
         if not self.mode["train"]:
             self.reset_render()
 
-        return self._obs()
+        # The initial observation is created by _obs()
+        initial_obs = self._obs()
+        
+        # The initial info dictionary is created by _info()
+        # At reset, steps=0 and total_reward=0, which is correct.
+        initial_info = self._info()
+        
+        # --- RETURN TWO VALUES AS REQUIRED ---
+        return initial_obs, initial_info
 
+    # --- ALSO MODIFY THE STEP METHOD TO RETURN 5 VALUES ---
     def step(self, action):
         self.custom_env.step(action)
 
@@ -81,8 +97,15 @@ class CustomEnvWrapper(gym.Env):
             self.step_render()
 
         self.steps += 1
+        
+        # In Gymnasium, `done` is split into `terminated` and `truncated`.
+        # For simplicity here, we'll treat them as the same.
+        # A more robust implementation would have self.custom_env distinguish them.
+        terminated = self._done()
+        truncated = False # Assuming TimeLimit wrapper will handle truncation
 
-        return self._obs(), self._rew(), self._done(), self._info()
+        # The new API requires 5 return values
+        return self._obs(), self._rew(), terminated, truncated, self._info()
 
     def reset_render(self):
         self.custom_env.reset_render()

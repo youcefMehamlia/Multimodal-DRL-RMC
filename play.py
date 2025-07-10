@@ -34,7 +34,9 @@ class Play(View):
     def loop(self):
         action = self.get_play_action()
 
-        _, _, done, info = self.env.step(action)
+        _, _, terminated, truncated, info = self.env.step(action)
+        done = terminated or truncated
+        
         self.env.log_info_writer(info, done, *self.log)
 
         #to fix additional episode at the end
