@@ -24,7 +24,8 @@ SUMO_PARAMS = {
     "log_overall_metrics" : True, # Whether to log overall metrics for the simulation.
     "steps": 3600, # The number of simulation steps to run.
     "delay": 0,   # The delay (in milliseconds) between simulation steps when running with a GUI.
-    "gui": False,  # Whether to run SUMO with a graphical user interface (GUI).
+    "gui": True,  # Whether to run SUMO with a graphical user interface (GUI).
+    # "gui": False,  # Whether to run SUMO with a graphical user interface (GUI).
     "log": False, # Whether to enable logging of simulation statistics.
     "seed":False, # Whether to use a fixed seed for the simulation (True for fixed, False for random).
     "seed_value": 42, # The seed value to use for the simulation if `seed` is True.
@@ -40,12 +41,16 @@ SUMO_PARAMS = {
 
    
     # Biased towards higher flows as requested.
-    "veh_per_hour_main_weights": [0.05, 0.10, 0.15, 0.25, 0.25, 0.20], # Sums to 1.0
-    "veh_per_hour_on_ramp_weights": [0.05, 0.05, 0.10, 0.15, 0.25, 0.25, 0.15], # Sums to 1.0
-    "veh_per_hour_off_ramp_weights": [0.4, 0.4, 0.2], # Sums to 1.0 (Example weights)
+    # "veh_per_hour_main_weights": [0.05, 0.10, 0.15, 0.25, 0.25, 0.20], # Sums to 1.0
+    # "veh_per_hour_on_ramp_weights": [0.05, 0.05, 0.10, 0.15, 0.25, 0.25, 0.15], # Sums to 1.0
+    #for testing purposes change to this:
+    "veh_per_hour_main_weights": [0.05, 0.1, 0.15, 0.3, 0.25, 0.15], # Sums to 1.0
+    "veh_per_hour_on_ramp_weights": [0.05, 0.05, 0.05, 0.15, 0.25, 0.3, 0.15], # Sums to 1.0
+    "veh_per_hour_off_ramp_weights": [0.4, 0.4, 0.2], # Sums to 1.0 
 
     
-    "con_penetration_rate_range": [0.01, 0.99],  ## updated 
+    # "con_penetration_rate_range": [0.99, 0.999],  ## for test 
+    "con_penetration_rate_range": [0.01, 0.99], ## updated 
 
     "v_type_def": "def", # The ID of the default vehicle type.
     "v_type_con": "con", # The ID of the connected vehicle type.

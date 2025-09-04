@@ -586,12 +586,20 @@ class SumoEnv:
             self.pen_rate = pen_rate
             
             # Calculate the number of vehicles for each type (connected vs. default)
-            main_con = int(main_flow * pen_rate)
-            main_def = int(main_flow * (1 - pen_rate))
-            on_ramp_con = int(on_ramp_flow * pen_rate)
-            on_ramp_def = int(on_ramp_flow * (1 - pen_rate))
-            off_ramp_con = int(off_ramp_flow * pen_rate)
-            off_ramp_def = int(off_ramp_flow * (1 - pen_rate))
+            main_con = int(main_flow -1 )
+            main_def = int(1)
+            on_ramp_con = int(on_ramp_flow -1)
+            on_ramp_def = int(1)
+            off_ramp_con = int(off_ramp_flow -1)
+            off_ramp_def = int(1)
+            
+            #for training comment out the above and uncomment below:
+            # main_con = int(main_flow * pen_rate)
+            # main_def = int(main_flow * (1 - pen_rate))
+            # on_ramp_con = int(on_ramp_flow * pen_rate)
+            # on_ramp_def = int(on_ramp_flow * (1 - pen_rate))
+            # off_ramp_con = int(off_ramp_flow * pen_rate)
+            # off_ramp_def = int(off_ramp_flow * (1 - pen_rate))
 
             # NOTE: The <route> definitions below are hardcoded from 1 ramp.
             # For other networks (e.g., 3ramp_...), we need to make these dynamic

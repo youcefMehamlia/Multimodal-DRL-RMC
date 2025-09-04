@@ -136,15 +136,16 @@ class AlineaDsBaseline(BaselineMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.CYCLE_LENGTH_SEC = self.args.get("alinea_detector_period_sec", 40.0)
-        self.CRITICAL_OCCUPANCY_PERCENT = 16.5; self.KR = 60
-        self.MIN_METERING_RATE_VPH = 180; self.MAX_METERING_RATE_VPH = 1800
+        self.CRITICAL_OCCUPANCY_PERCENT = 17; self.KR = 60
+        self.MIN_METERING_RATE_VPH = 180; self.MAX_METERING_RATE_VPH = 1900
         self.MIN_GREEN_TIME_SEC = 3.0; self.RAMP_SATURATION_FLOW_VPS = 0.5
         self.time_in_cycle_sec = 0.0; self.active_green_time_sec = 0.0
         self.downstream_detector_ids = []; self.current_metering_rate_vph = 0; self.measured_downstream_occ_for_log = 0.0
 
     def reset(self):
         self.simulation_reset()
-        self.downstream_detector_ids = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
+        self.downstream_detector_ids = ["bottle_neck_sens_0", "bottle_neck_sens_1", "bottle_neck_sens_2", "bottle_neck_sens_3"]
+       
         self.current_metering_rate_vph = (self.MAX_METERING_RATE_VPH + self.MIN_METERING_RATE_VPH) / 2
         self.time_in_cycle_sec = self.CYCLE_LENGTH_SEC
         self.active_green_time_sec = self.MIN_GREEN_TIME_SEC
@@ -154,6 +155,7 @@ class AlineaDsBaseline(BaselineMeta):
     def _get_downstream_occupancy(self):
         if not self.downstream_detector_ids: return 0.0
         occ = self.get_loops_occupancy_interval(self.downstream_detector_ids)
+        
         self.measured_downstream_occ_for_log = occ
         return occ
 
@@ -194,7 +196,7 @@ class PiAlineaDsBaseline(BaselineMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.CYCLE_LENGTH_SEC = self.args.get("alinea_detector_period_sec", 40.0)
-        self.CRITICAL_OCCUPANCY_PERCENT = 16.5; self.KP = 60.0; self.KI = 20.0
+        self.CRITICAL_OCCUPANCY_PERCENT = 17; self.KP = 60.0; self.KI = 10.0
         self.MIN_METERING_RATE_VPH = 180; self.MAX_METERING_RATE_VPH = 1800
         self.MIN_GREEN_TIME_SEC = 3.0; self.RAMP_SATURATION_FLOW_VPS = 0.5
         self.time_in_cycle_sec = 0.0; self.active_green_time_sec = 0.0; self.integral_term = 0.0
@@ -202,7 +204,7 @@ class PiAlineaDsBaseline(BaselineMeta):
 
     def reset(self):
         self.simulation_reset()
-        self.downstream_detector_ids = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
+        self.downstream_detector_ids = ["bottle_neck_sens_0", "bottle_neck_sens_1", "bottle_neck_sens_2", "bottle_neck_sens_3"]
         self.current_metering_rate_vph = (self.MAX_METERING_RATE_VPH + self.MIN_METERING_RATE_VPH) / 2
         self.integral_term = 0.0; self.time_in_cycle_sec = self.CYCLE_LENGTH_SEC
         self.active_green_time_sec = self.MIN_GREEN_TIME_SEC
